@@ -11,11 +11,15 @@ import Vendors from "@/pages/Vendors.tsx";
 import Materials from "@/pages/Materials.tsx";
 import Account from "@/pages/Account.tsx";
 import Footer from "@/components/Footer.tsx";
+import {Toaster} from "sonner";
+
+export const BASE_URL = "http://localhost:5000/api/v3"
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <CustomSidebar/>
+      <Toaster/>
       <div className={"flex flex-col"}>
         <Routes>
           <Route path="/" element={<Home/>}/>

@@ -1,4 +1,4 @@
-use sqlx::{query_as, query_scalar};
+use sqlx::query_as;
 
 use crate::{db::Pool, models::vendor::Vendor};
 
@@ -10,10 +10,14 @@ pub async fn select_vendor(pool: &Pool) -> anyhow::Result<Vec<Vendor>> {
     Ok(vendors)
 }
 
-pub async fn insert_vendor(pool: &Pool, name: &str) -> anyhow::Result<i32> {
-    let id = query_scalar!("insert into vendor (name) values ($1) returning id", name)
-        .fetch_one(pool)
-        .await?;
+pub async fn insert_vendor(pool: &Pool, name: &str) -> anyhow::Result<Vendor> {
+    let id = query_as!(
+        Vendor,
+        "insert into vendor (name) values ($1) returning *",
+        name
+    )
+    .fetch_one(pool)
+    .await?;
 
     Ok(id)
 }

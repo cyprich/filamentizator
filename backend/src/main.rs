@@ -1,4 +1,5 @@
-use actix_web::{App, HttpResponse, HttpServer, Responder, get, web};
+use actix_cors::Cors;
+use actix_web::{App, HttpResponse, HttpServer, Responder, get, middleware::NormalizePath, web};
 use anyhow::Context;
 
 use crate::handlers::*;
@@ -14,12 +15,19 @@ async fn main() -> anyhow::Result<()> {
     // migrations
     HttpServer::new(move || {
         App::new()
+            .wrap(Cors::permissive())
             .app_data(web::Data::new(pool.clone()))
-            .service(hello)
-            .service(get_vendor)
-            .service(post_vendor)
-            .service(delete_vendor)
-            .service(patch_vendor)
+            .service(
+                web::scope("/api/v3")
+                    .wrap(NormalizePath::new(
+                        actix_web::middleware::TrailingSlash::Trim,
+                    ))
+                    .service(hello)
+                    .service(get_vendor)
+                    .service(post_vendor)
+                    .service(delete_vendor)
+                    .service(patch_vendor),
+            )
     })
     .bind(("0.0.0.0", 5000))
     .context("Failed to bind API server to given IP address or port")?

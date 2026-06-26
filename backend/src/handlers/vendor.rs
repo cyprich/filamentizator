@@ -2,7 +2,7 @@ use actix_web::{Responder, delete, get, patch, post, web};
 
 use crate::{
     db,
-    handlers::{GeneralID, GeneralName, handle_db_error},
+    handlers::{GeneralName, handle_db_error},
 };
 
 #[get("/vendor")]
@@ -17,9 +17,9 @@ async fn post_vendor(pool: web::Data<db::Pool>, name: web::Json<GeneralName>) ->
     handle_db_error(id)
 }
 
-#[delete("/vendor")]
-async fn delete_vendor(pool: web::Data<db::Pool>, id: web::Json<GeneralID>) -> impl Responder {
-    let vendor = db::delete_vendor(&pool.into_inner(), id.id).await;
+#[delete("/vendor/{id}")]
+async fn delete_vendor(pool: web::Data<db::Pool>, id: web::Path<i32>) -> impl Responder {
+    let vendor = db::delete_vendor(&pool.into_inner(), id.into_inner()).await;
     handle_db_error(vendor)
 }
 
