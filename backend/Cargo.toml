@@ -6,4 +6,6 @@ edition = "2024"
 [dependencies]
 actix-web = "4.14.0"
 anyhow = "1.0.103"
-sqlx = { version = "0.9.0", features = ["migrate"] }
+dotenvy = "0.15.7"
+serde = { version = "1.0.228", features = ["derive"] }
+sqlx = { version = "0.9.0", features = ["migrate", "postgres", "runtime-tokio"] }

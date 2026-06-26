@@ -1,14 +1,31 @@
-use actix_web::{App, HttpResponse, HttpServer, Responder, get};
+use actix_web::{App, HttpResponse, HttpServer, Responder, get, web};
 use anyhow::Context;
+
+use crate::handlers::*;
+
+mod db;
+mod handlers;
+mod models;
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
-    HttpServer::new(move || App::new().service(hello))
-        .bind(("0.0.0.0", 5000))
-        .context("Failed to bind API server to given IP address or port")?
-        .run()
-        .await
-        .context("Failed to run the server")?;
+    let pool = db::create_pool().await?;
+
+    // migrations
+    HttpServer::new(move || {
+        App::new()
+            .app_data(web::Data::new(pool.clone()))
+            .service(hello)
+            .service(get_vendor)
+            .service(post_vendor)
+            .service(delete_vendor)
+            .service(patch_vendor)
+    })
+    .bind(("0.0.0.0", 5000))
+    .context("Failed to bind API server to given IP address or port")?
+    .run()
+    .await
+    .context("Failed to run the server")?;
 
     Ok(())
 }
