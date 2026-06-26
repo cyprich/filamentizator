@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+* {
+    @apply transition-all duration-100
+}
+
+main {
+    @apply p-16 bg-neutral-50 w-full min-h-[90vh];
+}
+
+/* sidebar offset = 48 + 16 = sidebar width + actual padding */
+main, footer {
+    @apply pl-64;
+}
+
+h1 {
+    @apply scroll-m-20 text-5xl font-extrabold tracking-tight text-balance
+}
+
+h2 {
+    @apply scroll-m-20 pb-2 text-3xl font-semibold tracking-tight first:mt-0;
+}
+
+h3 {
+    @apply scroll-m-20 text-2xl font-semibold tracking-tight;
+}
+
+h4 {
+    @apply scroll-m-20 text-xl font-semibold tracking-tight;
+}
+
+button {
+    @apply cursor-pointer;
+}
+

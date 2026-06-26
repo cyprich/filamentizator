@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+.icon {
+    @apply size-6;
+}
+
+.wide-button {
+    @apply w-full justify-start;
+}
+
+.hoverable {
+    @apply hover:underline underline-offset-4 cursor-pointer
+}
+
+footer .tech-icons {
+    @apply grid grid-cols-2 gap-2;
+}
