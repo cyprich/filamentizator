@@ -1,5 +1,5 @@
 import {useEffect, useState} from "react";
-import type {Vendor} from "@/models/vendor.ts";
+import {fixVendorDates, type Vendor} from "@/models/vendor.ts";
 import axios from "axios";
 import {BASE_URL} from "@/main.tsx";
 import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table.tsx";
@@ -23,6 +23,7 @@ import {
     DialogTitle
 } from "@/components/ui/dialog.tsx";
 import {Label} from "@/components/ui/label.tsx";
+import {prettifyDate} from "@/lib/utils.ts";
 
 export default function Vendors() {
     const [vendors, setVendors] = useState<Vendor[]>([])
@@ -49,8 +50,9 @@ export default function Vendors() {
 
         axios.post<Vendor>(`${BASE_URL}/vendor`, {"name": addVendorValue})
             .then(resp => {
+                const newVendor = fixVendorDates(resp.data)
                 setVendors(
-                    prev => prev ? [...prev, resp.data] : prev
+                    prev => prev ? [...prev, newVendor] : prev
                 )
                 setAddVendorValue("")
                 toast.success(`Vendor \"${resp.data.name}\" was successfully added`);
@@ -83,11 +85,12 @@ export default function Vendors() {
             return
         }
         axios.patch<Vendor>(`${BASE_URL}/vendor/${vendor.id}`, {"name": newName})
-            .then(() => {
+            .then(resp => {
                 const oldName = vendor.name
                 vendor.name = newName
                 setEditingVendor(undefined)
                 setEditVendorValue(undefined)
+                vendor.date_edited = prettifyDate(resp.data.date_edited)
                 toast.success(`Vendor "${oldName}" successfully updated to \"${newName}\"`)
             })
             .catch(e =>  {
@@ -99,7 +102,14 @@ export default function Vendors() {
     // page load
     useEffect(() => {
         axios.get<Vendor[]>(`${BASE_URL}/vendor`)
-            .then(resp => setVendors(resp.data))
+            .then(resp => {
+                const vendors = resp.data.map(
+                    v => {
+                        return fixVendorDates(v)
+                    }
+                );
+                setVendors(vendors)
+            })
             // .then(resp => console.log(resp.data))
             .catch(e => console.error(e))
     }, []);
@@ -112,6 +122,8 @@ export default function Vendors() {
                 <TableHeader>
                     <TableRow>
                         <TableHead>Vendor Name</TableHead>
+                        <TableHead className={"w-72"}>Last update</TableHead>
+                        <TableHead className={"w-72"}>Date created</TableHead>
                         <TableHead className={"w-32 text-right"}>Actions</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -120,6 +132,8 @@ export default function Vendors() {
                         vendors.map(v => (
                             <TableRow>
                                 <TableCell>{v.name}</TableCell>
+                                <TableCell>{v.date_edited}</TableCell>
+                                <TableCell>{v.date_created}</TableCell>
                                 <TableCell className={"text-right"}>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>

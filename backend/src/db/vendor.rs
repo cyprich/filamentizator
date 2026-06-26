@@ -3,7 +3,7 @@ use sqlx::query_as;
 use crate::{db::Pool, models::vendor::Vendor};
 
 pub async fn select_vendor(pool: &Pool) -> anyhow::Result<Vec<Vendor>> {
-    let vendors = query_as!(Vendor, "select * from vendor")
+    let vendors = query_as!(Vendor, "select * from vendor order by date_created")
         .fetch_all(pool)
         .await?;
 
