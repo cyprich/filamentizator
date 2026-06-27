@@ -19,8 +19,10 @@ export default function Footer() {
                 <p className={"text-lg"}>© Peter Cyprich</p>
                 <p>2026</p>
                 <div className={"flex items-center gap-2 pt-2 mt-2 border-t border-t-neutral-300"}>
-                    <a href={"https://github.com/cyprich/filamentizator"} className={"hoverable"} target={"_blank"}>Source Code</a>
-                    <ExternalLinkIcon className={"size-5"}/>
+                    <a href={"https://github.com/cyprich/filamentizator"} className={"hoverable flex items-center gap-1.5"} target={"_blank"}>
+                        Source Code
+                        <ExternalLinkIcon className={"size-4"}/>
+                    </a>
                 </div>
             </div>
             <Separator/>

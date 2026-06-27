@@ -10,7 +10,7 @@ import {
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu.tsx";
 import {Button} from "@/components/ui/button.tsx";
-import {CheckIcon, MoreHorizontalIcon} from "lucide-react";
+import {CheckIcon, MoreHorizontalIcon, XIcon} from "lucide-react";
 import {Input} from "@/components/ui/input.tsx";
 import {Field, FieldGroup} from "@/components/ui/field.tsx";
 import {toast} from "sonner";
@@ -170,9 +170,14 @@ export default function Vendors() {
                                     onChange={e => setAddVendorValue(e.target.value)}
                                 />
                                 {
-                                    isVendorNameValid(addVendorValue) && <Button variant={"secondary"} onClick={addVendor}>
-                                        <CheckIcon/>
-                                    </Button>
+                                    isVendorNameValid(addVendorValue) && <div className={"flex gap-2"}>
+                                        <Button variant={"secondary"} onClick={addVendor}>
+                                            <CheckIcon/>
+                                        </Button>
+                                        <Button variant={"secondary"} onClick={() => setAddVendorValue("")}>
+                                            <XIcon/>
+                                        </Button>
+                                    </div>
                                 }
                             </Field>
                         </TableCell>

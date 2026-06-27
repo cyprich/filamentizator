@@ -94,7 +94,6 @@ function VendorsSection() {
                                                     <CardTitle><h3>{v.name}</h3></CardTitle>
                                                 </CardHeader>
                                                 <CardContent className={"flex flex-col gap-1"}>
-                                                    <p>Vendor name: {v.name}</p>
                                                     <p>Last update: {v.date_edited}</p>
                                                     <p>Created: {v.date_created}</p>
                                                 </CardContent>
