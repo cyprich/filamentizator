@@ -51,7 +51,7 @@ export default function Home() {
                     <NameTable data={materials} dataName={"Material"} paginationSize={10}/>
                 </Section>
             </div>
-            <Section title={"Account"}>//TODO</Section>
+            <Section title={"Account"} titleLink={"/account"}>//TODO</Section>
         </main>
     )
 }
