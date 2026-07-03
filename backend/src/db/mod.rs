@@ -3,10 +3,16 @@ use std::env;
 use anyhow::Context;
 use sqlx::postgres::PgPoolOptions;
 
+pub mod filament;
+pub mod material;
 pub mod vendor;
+
+pub use filament::*;
+pub use material::*;
 pub use vendor::*;
 
 pub type Pool = sqlx::Pool<sqlx::Postgres>;
+pub type Builder = sqlx::QueryBuilder<sqlx::Postgres>;
 
 pub async fn create_pool() -> anyhow::Result<Pool> {
     dotenvy::dotenv().context("Failed to load environment variables")?;

@@ -1,11 +1,11 @@
 import {type ReactElement, useEffect, useState} from "react";
-import {fixVendorDates, type Vendor} from "@/models/vendor.ts";
 import axios from "axios";
 import {BASE_URL} from "@/main.tsx";
 import {toast} from "sonner";
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
+import {Card, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel.tsx";
 import {useNavigate} from "react-router";
+import type {Vendor} from "@/models/vendor.ts";
 
 export default function Home() {
     return (
@@ -65,10 +65,7 @@ function VendorsSection() {
                 if (resp.data.length === 0) {
                     return
                 }
-                const newVendors = resp.data.map(v => (
-                    fixVendorDates(v)
-                ))
-                setVendors(newVendors)
+                setVendors(resp.data)
             })
             .catch(e => {
                 toast.error(`Error while getting Vendors: ${e}`)
@@ -93,10 +90,6 @@ function VendorsSection() {
                                                 <CardHeader>
                                                     <CardTitle><h3>{v.name}</h3></CardTitle>
                                                 </CardHeader>
-                                                <CardContent className={"flex flex-col gap-1"}>
-                                                    <p>Last update: {v.date_edited}</p>
-                                                    <p>Created: {v.date_created}</p>
-                                                </CardContent>
                                             </Card>
                                         </CarouselItem>
                                     ))

@@ -1,0 +1,39 @@
+use actix_web::{Responder, delete, get, patch, post, web};
+
+use crate::{
+    db,
+    handlers::handle_db_error,
+    models::{FilamentNew, FilamentUpdate},
+};
+
+#[get("/filament")]
+pub async fn get_filament(pool: web::Data<db::Pool>) -> impl Responder {
+    let filaments = db::select_filaments(&pool.into_inner(), None).await;
+    handle_db_error(filaments)
+}
+
+#[post("/filament")]
+pub async fn post_filament(
+    pool: web::Data<db::Pool>,
+    filament: web::Json<FilamentNew>,
+) -> impl Responder {
+    let filament = db::insert_filament(&pool.into_inner(), filament.into_inner()).await;
+    handle_db_error(filament)
+}
+
+#[delete("/filament/{id}")]
+pub async fn delete_filament(pool: web::Data<db::Pool>, id: web::Path<i32>) -> impl Responder {
+    let filament = db::delete_filament(&pool.into_inner(), id.into_inner()).await;
+    handle_db_error(filament)
+}
+
+#[patch("/filament/{id}")]
+pub async fn patch_filament(
+    pool: web::Data<db::Pool>,
+    id: web::Path<i32>,
+    filament: web::Json<FilamentUpdate>,
+) -> impl Responder {
+    let filament =
+        db::update_filament(&pool.into_inner(), id.into_inner(), filament.into_inner()).await;
+    handle_db_error(filament)
+}

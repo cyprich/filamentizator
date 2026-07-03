@@ -13,8 +13,8 @@ async fn get_vendor(pool: web::Data<db::Pool>) -> impl Responder {
 
 #[post("/vendor")]
 async fn post_vendor(pool: web::Data<db::Pool>, name: web::Json<GeneralName>) -> impl Responder {
-    let id = db::insert_vendor(&pool.into_inner(), &name.name).await;
-    handle_db_error(id)
+    let vendor = db::insert_vendor(&pool.into_inner(), &name.name).await;
+    handle_db_error(vendor)
 }
 
 #[delete("/vendor/{id}")]

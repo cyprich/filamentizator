@@ -24,9 +24,17 @@ async fn main() -> anyhow::Result<()> {
                     ))
                     .service(hello)
                     .service(get_vendor)
+                    .service(get_material)
+                    .service(get_filament)
                     .service(post_vendor)
+                    .service(post_material)
+                    .service(post_filament)
                     .service(delete_vendor)
-                    .service(patch_vendor),
+                    .service(delete_material)
+                    .service(delete_filament)
+                    .service(patch_vendor)
+                    .service(patch_material)
+                    .service(patch_filament),
             )
     })
     .bind(("0.0.0.0", 5000))

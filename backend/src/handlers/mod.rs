@@ -1,7 +1,12 @@
 use actix_web::{HttpResponse, Responder};
-
-pub mod vendor;
 use serde::Deserialize;
+
+pub mod filament;
+pub mod material;
+pub mod vendor;
+
+pub use filament::*;
+pub use material::*;
 pub use vendor::*;
 
 pub fn handle_db_error<T: serde::Serialize>(result: anyhow::Result<T>) -> impl Responder {
@@ -16,9 +21,4 @@ pub fn handle_db_error<T: serde::Serialize>(result: anyhow::Result<T>) -> impl R
 #[derive(Deserialize)]
 pub struct GeneralName {
     pub name: String,
-}
-
-#[derive(Deserialize)]
-pub struct GeneralID {
-    pub id: i32,
 }

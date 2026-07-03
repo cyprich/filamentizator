@@ -83,7 +83,7 @@ function TechLink(props: LinkProps) {
 
 type TechSectionProps = {
     name: string,
-    children: ReactElement[]
+    children: ReactElement | ReactElement[]
 }
 
 function TechSection(props: TechSectionProps) {
