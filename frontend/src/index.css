@@ -1,2 +1,19 @@
 @import 'tailwindcss';
 @import '@heroui/styles';
+
+* {
+    @apply transition-all duration-200;
+}
+
+main {
+    @apply pt-24 pr-16 pb-16 pl-20;
+    @apply min-h-screen;
+}
+
+nav > * {
+    @apply hover:drop-shadow-lg flex justify-center items-center gap-2;
+}
+
+nav svg {
+    @apply size-4;
+}
