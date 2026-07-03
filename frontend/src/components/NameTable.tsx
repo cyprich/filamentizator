@@ -1,4 +1,4 @@
-import {AlertDialog, Button, Input, Label, Pagination, Table, TextField} from "@heroui/react";
+import {AlertDialog, Button, Input, Label, Pagination, Table, TextField, toast} from "@heroui/react";
 import {useEffect, useMemo, useState} from "react";
 import type {Vendor} from "../types/vendor.ts";
 import type {Material} from "../types/material.ts";
@@ -48,11 +48,16 @@ export function NameTable(props: GeneralTableProps) {
         axios.patch(`${BASE_URL}/${endpoint}/${editItem.id}`, {name: newItemName})
             .then(resp => {
                 console.log(resp)
-                // TODO toast
+                toast.success("Successfully updated!")
                 setData(old => old.map(i => i.id === editItem.id ? {...i, name: newItemName} : i))
                 cancelEverything()
             })
-            .catch(e => console.error(e))
+            .catch(e => {
+                console.error(e)
+                toast.danger(`Update failed!`, {
+                    description: `${e}`
+                })
+            })
     }
 
     const deleteClicked = () => {
@@ -65,11 +70,15 @@ export function NameTable(props: GeneralTableProps) {
         axios.delete(`${BASE_URL}/${endpoint}/${deleteItem.id}`)
             .then(resp => {
                 console.log(resp)
+                toast.success("Successfully deleted!")
                 setData(old => old.filter(i => i.id !== deleteItem.id))
                 cancelEverything()
             })
             .catch(e => {
                 console.error(e)
+                toast.danger('Delete failed!', {
+                    description: `${e}`
+                })
             })
     }
 

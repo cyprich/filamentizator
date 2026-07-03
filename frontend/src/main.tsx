@@ -10,11 +10,13 @@ import Footer from "./components/Footer.tsx";
 import Device from "./pages/Device.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Labels from "./pages/Labels.tsx";
+import { Toast } from "@heroui/react";
 
 export const BASE_URL = "http://localhost:5000/api/v3"
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
+        <Toast.Provider/>
         <BrowserRouter>
             <Navbar/>
             <Routes>
@@ -27,5 +29,5 @@ createRoot(document.getElementById('root')!).render(
             </Routes>
             <Footer/>
         </BrowserRouter>
-    </StrictMode>,
+    </StrictMode>
 )
