@@ -1,8 +1,17 @@
-import {AlertDialog, Button, Input, Label, Pagination, Table, TextField, toast} from "@heroui/react";
+import {
+    AlertDialog,
+    Button,
+    Input, InputGroup,
+    Label,
+    Pagination, Separator,
+    Table,
+    TextField,
+    toast
+} from "@heroui/react";
 import {useEffect, useMemo, useState} from "react";
 import type {Vendor} from "../types/vendor.ts";
 import type {Material} from "../types/material.ts";
-import {PencilIcon, TrashIcon} from "lucide-react";
+import {CheckIcon, PencilIcon, TrashIcon, XIcon} from "lucide-react";
 import axios from "axios";
 import {BASE_URL} from "../main.tsx";
 
@@ -22,8 +31,9 @@ export type GeneralTableProps = {
 export function NameTable(props: GeneralTableProps) {
     const [data, setData] = useState<Vendor[] | Material[]>([])
     const [editItem, setEditItem] = useState<undefined | Vendor | Material>(undefined)
-    const [newItemName, setNewItemName] = useState<undefined | string>(undefined)
+    const [editItemName, setEditItemName] = useState<undefined | string>(undefined)
     const [deleteItem, setDeleteItem] = useState<undefined | Vendor | Material>(undefined)
+    const [newItemName, setNewItemName] = useState<string>("")
 
     const [page, setPage] = useState(1);
     const totalPages = Math.ceil(data.length / ROWS_PER_PAGE);
@@ -38,18 +48,37 @@ export function NameTable(props: GeneralTableProps) {
     const start = data.length === 0 ? 0 : (page - 1) * ROWS_PER_PAGE + 1;
     const end = Math.min(page * ROWS_PER_PAGE, data.length);
 
+    const addClicked = () => {
+        if (newItemName === "") return;
+
+        const endpoint = props.dataName.toLowerCase()
+        axios.post(`${BASE_URL}/${endpoint}`, {name: newItemName})
+            .then(resp => {
+                console.log(resp)
+                toast.success("Successfully added!")
+                setData(old => [...old, resp.data])
+                cancelEverything()
+            })
+            .catch(e => {
+                console.error(e)
+                toast.danger("Failed to add!", {
+                    description: `${e}`
+                })
+            })
+    }
+
     const editClicked = () => {
-        if (editItem === undefined || newItemName === undefined) {
+        if (editItem === undefined || editItemName === undefined) {
             cancelEverything()
             return
         }
 
         const endpoint = props.dataName.toLowerCase()
-        axios.patch(`${BASE_URL}/${endpoint}/${editItem.id}`, {name: newItemName})
+        axios.patch(`${BASE_URL}/${endpoint}/${editItem.id}`, {name: editItemName})
             .then(resp => {
                 console.log(resp)
                 toast.success("Successfully updated!")
-                setData(old => old.map(i => i.id === editItem.id ? {...i, name: newItemName} : i))
+                setData(old => old.map(i => i.id === editItem.id ? {...i, name: editItemName} : i))
                 cancelEverything()
             })
             .catch(e => {
@@ -85,7 +114,8 @@ export function NameTable(props: GeneralTableProps) {
     const cancelEverything = () => {
         setEditItem(undefined)
         setDeleteItem(undefined)
-        setNewItemName(undefined)
+        setEditItemName(undefined)
+        setNewItemName("")
     }
 
     useEffect(() => {
@@ -94,6 +124,7 @@ export function NameTable(props: GeneralTableProps) {
 
     return (
         <>
+            {/* TODO empty state */}
             <Table className={props.className}>
                 <Table.ScrollContainer>
                     <Table.Content>
@@ -108,20 +139,20 @@ export function NameTable(props: GeneralTableProps) {
                         <Table.Body items={paginatedItems}>
                             {
                                 paginatedItems.map(item => (
-                                    <Table.Row>
+                                    <Table.Row key={item.id}>
                                         <Table.Cell>{item.name}</Table.Cell>
                                         <Table.Cell className={"flex gap-2 justify-end *:size-5"}>
                                             {/* edit button */}
                                             <PencilIcon
-                                                className={"clickable"}
+                                                className={"clickable-no-scale"}
                                                 onClick={() => setEditItem(item)}
                                             />
                                             {/* delete button */}
                                             <TrashIcon
-                                                className={"clickable hover:text-danger"}
+                                                className={"clickable-no-scale hover:text-danger"}
                                                 onClick={() => {
                                                     setDeleteItem(item)
-                                                    setNewItemName(item.name)
+                                                    setEditItemName(item.name)
                                                 }}
                                             />
                                         </Table.Cell>
@@ -157,6 +188,31 @@ export function NameTable(props: GeneralTableProps) {
                     </Pagination>
                 </Table.Footer>
             </Table>
+
+            <TextField className={"mt-4"}>
+                <Label>Add new {props.dataName}</Label>
+                <InputGroup
+                    variant={"secondary"}
+                    className={"w-full"}
+                >
+                    <InputGroup.Input
+                        placeholder={`Enter name...`}
+                        value={newItemName}
+                        onChange={e => setNewItemName(e.target.value)}
+                    />
+                    <Separator orientation={"vertical"} variant={"tertiary"}/>
+                    <InputGroup.Suffix className={"flex gap-2.5"}>
+                        <CheckIcon
+                            className={"clickable-no-scale"}
+                            onClick={addClicked}
+                        />
+                        <XIcon
+                            className={"clickable-no-scale"}
+                            onClick={cancelEverything}
+                        />
+                    </InputGroup.Suffix>
+                </InputGroup>
+            </TextField>
             {/* edit dialog */}
             <AlertDialog isOpen={editItem !== undefined}>
                 <AlertDialog.Backdrop>
@@ -171,8 +227,8 @@ export function NameTable(props: GeneralTableProps) {
                                 <TextField name={"editName"}>
                                     <Label>New name for <strong>{editItem?.name}</strong></Label>
                                     <Input
-                                        value={newItemName}
-                                        onChange={(e) => setNewItemName(e.target.value)}
+                                        value={editItemName}
+                                        onChange={(e) => setEditItemName(e.target.value)}
                                         placeholder={"Enter new name..."}
                                     />
                                 </TextField>
