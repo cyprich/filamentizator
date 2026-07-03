@@ -6,7 +6,7 @@
 }
 
 main {
-    @apply pt-24 pr-16 pb-16 pl-20;
+    @apply pt-24 px-36 pb-16;
     @apply min-h-screen;
 }
 
@@ -16,4 +16,13 @@ nav > * {
 
 nav svg {
     @apply size-4;
+}
+
+.clickable-no-scale {
+    @apply cursor-pointer select-none;
+}
+
+.clickable {
+    @apply cursor-pointer select-none;
+    @apply hover:scale-105 origin-center;
 }

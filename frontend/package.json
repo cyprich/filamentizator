@@ -12,6 +12,7 @@
   "dependencies": {
     "@heroui/react": "^3.2.1",
     "@heroui/styles": "^3.2.1",
+    "@icons-pack/react-simple-icons": "^13.13.0",
     "@tailwindcss/vite": "^4.3.2",
     "axios": "^1.18.1",
     "lucide-react": "^1.23.0",
