@@ -7,30 +7,22 @@ use crate::{
 
 // TODO transactions
 
-pub async fn select_filaments(pool: &Pool, id: Option<i32>) -> anyhow::Result<Vec<FilamentFull>> {
+pub async fn select_filaments(pool: &Pool) -> anyhow::Result<Vec<FilamentFull>> {
     let mut tx = pool.begin().await?;
 
-    let mut builder = Builder::new(
+    let filaments = query_as!(
+        FilamentJoin,
         "select 
             f.*, 
             v.name as vendor_name ,
             m.name as material_name
         from filament f
         join vendor v on f.vendor_id = v.id 
-        join material m on f.material_id = m.id  ",
-    );
-
-    if let Some(val) = id {
-        builder.push(" where f.id = ");
-        builder.push_bind(val);
-    }
-
-    builder.push(" order by f.date_created");
-
-    let filaments = builder
-        .build_query_as::<FilamentJoin>()
-        .fetch_all(&mut *tx)
-        .await?;
+        join material m on f.material_id = m.id 
+        order by f.date_created"
+    )
+    .fetch_all(&mut *tx)
+    .await?;
 
     let mut result = vec![];
 
@@ -40,27 +32,45 @@ pub async fn select_filaments(pool: &Pool, id: Option<i32>) -> anyhow::Result<Ve
         result.push(filament);
     }
 
+    tx.commit().await?;
+
     Ok(result)
 }
 
-pub async fn insert_filament(pool: &Pool, filament: FilamentNew) -> anyhow::Result<FilamentFull> {
+pub async fn select_filament_by_id(pool: &Pool, id: i32) -> anyhow::Result<FilamentFull> {
     let mut tx = pool.begin().await?;
 
+    let filament = query_as!(
+        FilamentJoin,
+        "select 
+            f.*, 
+            v.name as vendor_name ,
+            m.name as material_name
+        from filament f
+        join vendor v on f.vendor_id = v.id 
+        join material m on f.material_id = m.id
+        where f.id = $1 
+        order by f.date_created",
+        id
+    )
+    .fetch_one(&mut *tx)
+    .await?;
+
+    let colors = select_filament_colors(&mut *tx, id).await?;
+
+    Ok(FilamentFull::new(filament, colors))
+}
+
+pub async fn insert_filament(pool: &Pool, filament: FilamentNew) -> anyhow::Result<FilamentFull> {
     let f = filament;
     let id = query_scalar!("
         insert into filament ( vendor_id, material_id, temp_min, temp_max, temp_bed_min, temp_bed_max, price )
         values ( $1, $2, $3, $4, $5, $6, $7) 
         returning id
         ", f.vendor_id, f.material_id, f.temp_min, f.temp_max, f.temp_bed_min, f.temp_bed_max, f.price
-    ).fetch_one(&mut *tx).await?;
+    ).fetch_one(pool).await?;
 
-    let filament = select_filaments(pool, Some(id))
-        .await?
-        .into_iter()
-        .next()
-        .unwrap();
-
-    tx.commit().await?;
+    let filament = select_filament_by_id(pool, id).await?;
 
     Ok(filament)
 }

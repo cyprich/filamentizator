@@ -2,6 +2,7 @@ import type {Material} from "./material.ts";
 import type {Vendor} from "./vendor.ts";
 import type {Temp} from "./temp.ts";
 import type {Weight} from "./weight.ts";
+import type {Color} from "./color.ts";
 
 export type Filament = {
     id: number;
@@ -10,6 +11,7 @@ export type Filament = {
     name: string;
     temp: Temp;
     weight: Weight;
+    colors: Color[];
     price: number;
     date_created: string;
     date_updated: string;

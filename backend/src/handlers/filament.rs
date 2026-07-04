@@ -8,8 +8,14 @@ use crate::{
 
 #[get("/filament")]
 pub async fn get_filament(pool: web::Data<db::Pool>) -> impl Responder {
-    let filaments = db::select_filaments(&pool.into_inner(), None).await;
+    let filaments = db::select_filaments(&pool.into_inner()).await;
     handle_db_error(filaments)
+}
+
+#[get("/filament/{id}")]
+pub async fn get_filament_by_id(pool: web::Data<db::Pool>, id: web::Path<i32>) -> impl Responder {
+    let filament = db::select_filament_by_id(&pool.into_inner(), id.into_inner()).await;
+    handle_db_error(filament)
 }
 
 #[post("/filament")]
