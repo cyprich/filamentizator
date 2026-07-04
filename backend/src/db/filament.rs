@@ -2,10 +2,14 @@ use sqlx::{query_as, query_scalar};
 
 use crate::{
     db::{Builder, Pool},
-    models::{FilamentFull, FilamentJoin, FilamentNew, FilamentUpdate},
+    models::{Color, FilamentFull, FilamentJoin, FilamentNew, FilamentUpdate},
 };
 
+// TODO transactions
+
 pub async fn select_filaments(pool: &Pool, id: Option<i32>) -> anyhow::Result<Vec<FilamentFull>> {
+    let mut tx = pool.begin().await?;
+
     let mut builder = Builder::new(
         "select 
             f.*, 
@@ -25,10 +29,18 @@ pub async fn select_filaments(pool: &Pool, id: Option<i32>) -> anyhow::Result<Ve
 
     let filaments = builder
         .build_query_as::<FilamentJoin>()
-        .fetch_all(pool)
+        .fetch_all(&mut *tx)
         .await?;
 
-    Ok(filaments.into_iter().map(|f| f.into_full()).collect())
+    let mut result = vec![];
+
+    for f in filaments {
+        let colors = select_filament_colors(&mut *tx, f.id).await?;
+        let filament = FilamentFull::new(f, colors);
+        result.push(filament);
+    }
+
+    Ok(result)
 }
 
 pub async fn insert_filament(pool: &Pool, filament: FilamentNew) -> anyhow::Result<FilamentFull> {
@@ -73,7 +85,9 @@ pub async fn delete_filament(pool: &Pool, id: i32) -> anyhow::Result<FilamentFul
     .fetch_one(pool)
     .await?;
 
-    Ok(filament.into_full())
+    let colors = select_filament_colors(pool, filament.id).await?;
+
+    Ok(FilamentFull::new(filament, colors))
 }
 
 pub async fn update_filament(
@@ -87,6 +101,7 @@ pub async fn update_filament(
 
     let f = filament;
     // maybe not the best code, but hopefully it will work
+    // TODO some kind of macro would be GREAT for this
     if let Some(val) = f.vendor_id {
         builder.push(", vendor_id = ");
         builder.push_bind(val);
@@ -115,6 +130,18 @@ pub async fn update_filament(
         builder.push(", temp_bed_max = ");
         builder.push_bind(val);
     }
+    if let Some(val) = f.original_weight {
+        builder.push(", original_weight = ");
+        builder.push_bind(val);
+    }
+    if let Some(val) = f.net_weight {
+        builder.push(", net_weight = ");
+        builder.push_bind(val);
+    }
+    if let Some(val) = f.spool_weight {
+        builder.push(", spool_weight = ");
+        builder.push_bind(val);
+    }
     if let Some(val) = f.price {
         builder.push(", price = ");
         builder.push_bind(val);
@@ -138,5 +165,34 @@ pub async fn update_filament(
         .fetch_one(pool)
         .await?;
 
-    Ok(filament.into_full())
+    let colors = select_filament_colors(pool, filament.id).await?;
+
+    Ok(FilamentFull::new(filament, colors))
+}
+
+// TODO - maybe querying them all at once, and then grouping them would be better...
+pub async fn select_filament_colors<'e, E>(
+    executor: E,
+    filament_id: i32,
+) -> anyhow::Result<Vec<Color>>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+{
+    let colors = query_as!(
+        Color,
+        "select 
+            c.id, 
+            c.name, 
+            c.hex
+        from color c 
+        join filament_color f on c.id = f.color_id
+        where f.filament_id = $1
+        order by f.position
+        ",
+        filament_id
+    )
+    .fetch_all(executor)
+    .await?;
+
+    Ok(colors)
 }

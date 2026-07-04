@@ -1,10 +1,12 @@
 use actix_web::{HttpResponse, Responder};
 use serde::Deserialize;
 
+pub mod color;
 pub mod filament;
 pub mod material;
 pub mod vendor;
 
+pub use color::*;
 pub use filament::*;
 pub use material::*;
 pub use vendor::*;

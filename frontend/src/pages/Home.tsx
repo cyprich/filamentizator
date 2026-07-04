@@ -125,9 +125,9 @@ function FilamentCard(props: FilamentCardProps) {
                                 <div>
                                     <ThermometerIcon/>
                                     <>
-                                        {props.filament.temp_min}
+                                        {props.filament.temp.min}
                                         {
-                                            props.filament.temp_max && ` - ${props.filament.temp_max}`
+                                            props.filament.temp.max && ` - ${props.filament.temp.max}`
                                         }
                                         { " °C"}
                                     </>

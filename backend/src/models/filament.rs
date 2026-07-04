@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
 
-use crate::models::{Material, Vendor};
+use crate::models::{Color, Material, Temp, Vendor, Weight};
 
 // represents table from database
 // it's not even being used, but i would like to keep it for completeness
@@ -16,6 +16,9 @@ pub struct Filament {
     pub temp_bed_min: i32,
     pub temp_bed_max: Option<i32>,
     pub price: f32,
+    pub original_weight: i32,
+    pub net_weight: i32,
+    pub spool_weight: i32,
     pub date_created: chrono::DateTime<chrono::Utc>,
     pub date_updated: chrono::DateTime<chrono::Utc>,
 }
@@ -30,6 +33,9 @@ pub struct FilamentNew {
     pub temp_max: Option<i32>,
     pub temp_bed_min: i32,
     pub temp_bed_max: Option<i32>,
+    pub original_weight: i32,
+    pub net_weight: i32,
+    pub spool_weight: i32,
     pub price: f32,
 }
 
@@ -43,6 +49,9 @@ pub struct FilamentUpdate {
     pub temp_max: Option<Option<i32>>,
     pub temp_bed_min: Option<i32>,
     pub temp_bed_max: Option<Option<i32>>,
+    pub original_weight: Option<i32>,
+    pub net_weight: Option<i32>,
+    pub spool_weight: Option<i32>,
     pub price: Option<f32>,
 }
 
@@ -59,15 +68,12 @@ pub struct FilamentJoin {
     pub temp_max: Option<i32>,
     pub temp_bed_min: i32,
     pub temp_bed_max: Option<i32>,
+    pub original_weight: i32,
+    pub net_weight: i32,
+    pub spool_weight: i32,
     pub price: f32,
     pub date_created: chrono::DateTime<chrono::Utc>,
     pub date_updated: chrono::DateTime<chrono::Utc>,
-}
-
-impl FilamentJoin {
-    pub fn into_full(self) -> FilamentFull {
-        FilamentFull::from_joined(self)
-    }
 }
 
 // this is being sent via api, similar to joined but with 'nested' material and vendor json
@@ -77,18 +83,17 @@ pub struct FilamentFull {
     pub material: Material,
     pub vendor: Vendor,
     pub name: String,
-    pub temp_min: i32,
-    pub temp_max: Option<i32>,
-    pub temp_bed_min: i32,
-    pub temp_bed_max: Option<i32>,
+    pub temp: Temp,
+    pub weight: Weight,
     pub price: f32,
+    pub colors: Vec<Color>,
     pub date_created: chrono::DateTime<chrono::Utc>,
     pub date_updated: chrono::DateTime<chrono::Utc>,
 }
 
 impl FilamentFull {
-    pub fn from_joined(filament: FilamentJoin) -> Self {
-        let f = filament;
+    pub fn new(join: FilamentJoin, colors: Vec<Color>) -> Self {
+        let f = join;
         Self {
             id: f.id,
             material: Material {
@@ -100,10 +105,18 @@ impl FilamentFull {
                 name: f.vendor_name,
             },
             name: f.name,
-            temp_min: f.temp_min,
-            temp_max: f.temp_max,
-            temp_bed_min: f.temp_bed_min,
-            temp_bed_max: f.temp_bed_max,
+            temp: Temp {
+                min: f.temp_min,
+                max: f.temp_max,
+                bed_min: f.temp_bed_min,
+                bed_max: f.temp_bed_max,
+            },
+            weight: Weight {
+                original: f.original_weight,
+                net: f.net_weight,
+                spool: f.spool_weight,
+            },
+            colors,
             price: f.price,
             date_created: f.date_created,
             date_updated: f.date_updated,

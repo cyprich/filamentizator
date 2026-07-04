@@ -3,10 +3,12 @@ use std::env;
 use anyhow::Context;
 use sqlx::postgres::PgPoolOptions;
 
+pub mod color;
 pub mod filament;
 pub mod material;
 pub mod vendor;
 
+pub use color::*;
 pub use filament::*;
 pub use material::*;
 pub use vendor::*;
