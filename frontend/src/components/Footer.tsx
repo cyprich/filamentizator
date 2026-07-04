@@ -7,7 +7,7 @@ export default function Footer() {
     const year = new Date().getFullYear()
 
     return (
-        <footer className={"flex gap-48 bg-background-inverse px-64 py-16 **:text-background **:font-light"}>
+        <footer className={"flex gap-48 bg-neutral-950 px-64 py-16 **:text-neutral-300 **:font-light"}>
             <div>
                 <Title text={"Filamentizator"} subtext={"v3"}/>
                 <p className={"text-sm"}>© 2025 - {year}</p>

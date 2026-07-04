@@ -5,6 +5,10 @@
     @apply transition-all duration-200;
 }
 
+body {
+    @apply bg-background;
+}
+
 main {
     @apply pt-24 px-36 pb-16;
     @apply min-h-screen;

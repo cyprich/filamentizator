@@ -30,6 +30,7 @@ export default function Home() {
 
     return (
         <main className={"flex flex-col gap-16"}>
+            <Typography color={"muted"} className={"-mb-14"}>Welcome to filamentizator!</Typography>
             <Section
                 title={"Filaments"}
                 titleLink={"/filaments"}
@@ -96,7 +97,7 @@ type FilamentCardProps = {
 
 function FilamentCard(props: FilamentCardProps) {
     return (
-        <Card className={`w-64 bg-neutral-50 border ${props.className} clickable`}>
+        <Card className={`w-64 bg-background **:text-foreground border ${props.className} clickable`}>
             {
                 props.filament
                     ? <>
