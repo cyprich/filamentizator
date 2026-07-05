@@ -1,6 +1,6 @@
 import {
     Button, ButtonGroup, Drawer,
-    InputGroup,
+    InputGroup, type Key,
     Label,
     ListBox,
     Select,
@@ -10,7 +10,7 @@ import {
     Typography
 } from "@heroui/react";
 import {useParams} from "react-router";
-import {useEffect, useState} from "react";
+import {type Dispatch, type SetStateAction, useEffect, useState} from "react";
 import {type Filament} from "../types/filament.ts";
 import axios from "axios";
 import {BASE_URL} from "../main.tsx";
@@ -22,7 +22,7 @@ import {
     CheckIcon, ChevronDownIcon, ChevronUpIcon, CircleQuestionMarkIcon,
     PaintbrushIcon,
     PencilIcon, SpoolIcon,
-    ThermometerIcon,
+    ThermometerIcon, TrashIcon,
     WeightIcon,
     XIcon
 } from "lucide-react";
@@ -99,10 +99,15 @@ export default function Filament() {
     return (
         <main>
             <Typography type={"h2"}>{filament.name}</Typography>
-            <div
-                className={"w-full h-2 rounded-full mt-4 mb-8 bg-linear-to-r shadow"}
-                style={{backgroundImage: `linear-gradient(to right,  ${filament.colors.map(c => `#${c.hex}`).join(", ")})`}}
-            />
+            {
+                filament.colors.length > 0
+                ? <div
+                        className={"w-full h-2 rounded-full mt-4 mb-8 bg-linear-to-r shadow"}
+                        style={{backgroundImage: `linear-gradient(to right,  ${filament.colors.map(c => `#${c.hex}`).join(", ")})`}}
+                 />
+                : <div className={"h-2 mt-4 mb-8"}/>
+            }
+
             <div className={"grid grid-cols-4 gap-12 *:flex *:flex-col *:gap-8 pb-8 border-b"}>
                 <div className={"gap-8"}>
                     <div className={"flex items-center gap-1.5 -mb-4"}>
@@ -143,7 +148,7 @@ export default function Filament() {
                         <PaintbrushIcon className={"size-7"}/>
                         <Typography type={"h3"}>Colors</Typography>
                     </div>
-                    <ColorsSection filamentColors={filament.colors}/>
+                    <ColorsSection filament={filament} setFilament={setFilament}/>
                 </div>
             </div>
             <div className={"pt-4"}>
@@ -254,6 +259,11 @@ type WeightSectionProps = {
 }
 
 function WeightSection(props: WeightSectionProps) {
+    const [originalWeight, setOriginalWeight] = useState<number>(props.weight.original)
+    const [netWeight, setNetWeight] = useState<number>(props.weight.net)
+    const [spoolWeight, setSpoolWeight] = useState<number>(props.weight.spool)
+    const [bruttoWeight, setBruttoWeight] = useState<number>(props.weight.net + props.weight.spool)
+
     return (
         <>
             <TextField className={"flex flex-col gap-4 *:flex *:flex-col *:gap-1"}>
@@ -371,11 +381,13 @@ function GeneralTempSection(props: GeneralTempSectionProps) {
 }
 
 type ColorsSectionProps = {
-    filamentColors: Color[];
+    filament: Filament;
+    setFilament: Dispatch<SetStateAction<Filament>>
 }
 
 function ColorsSection(props: ColorsSectionProps) {
     const [allColors, setAllColors] = useState<Color[]>([])
+    const [assignableColors, setAssignableColors] = useState<Color[]>([])
 
     // TODO crud
 
@@ -390,44 +402,95 @@ function ColorsSection(props: ColorsSectionProps) {
             })
     }, []);
 
-    function SelectionItem(props: {color: Color}) {
-        return (
-            <div className={"flex items-center gap-2.5"}>
-                <div className={"w-12 h-12 rounded-xl shadow"} style={{backgroundColor: `#${props.color.hex}`}} />
-                <div className={"flex flex-col gap-0.5"}>
-                    <p>{props.color.name || ""}</p>
-                    <p>#{props.color.hex}</p>
-                </div>
-            </div>
-        )
+    useEffect(() => {
+        const result =  allColors.filter(c => (
+            !props.filament.colors
+                .map(x => x.id)
+                .includes(c.id)
+        ));
+        setAssignableColors(result)
+    }, [allColors, props.filament]);
+
+    function unassignColorClicked(color_id: number) {
+        axios.delete<Color>(`${BASE_URL}/filament/${props.filament.id}/color/${color_id}`)
+            .then(resp => {
+                props.setFilament(prev => ({
+                    ...prev,
+                    colors: prev.colors.filter(c => c.id !== resp.data.id)
+                }))
+            })
+            .catch(e => {
+                console.error(e)
+                toast.danger("Failed unassigning Color from Filament", {
+                    description: `${e}`
+                })
+            })
+    }
+
+    function onAssignChange(value: Key | null) {
+        if (value === null) return
+        const selected = assignableColors.find(c => c.hex === value)
+        if (!selected) return
+
+        axios.post(`${BASE_URL}/filament_color`, {
+            filament_id: props.filament.id,
+            color_id: selected.id
+        })
+            .then(() => {
+                props.setFilament(prev => ({
+                    ...prev,
+                    colors: [...prev.colors, selected]
+                }))
+            })
+            .catch(e => {
+                console.error(e)
+                toast.danger("Failed to assign Color to Filament", {
+                    description: `${e}`
+                })
+            })
+
+
     }
 
     return (
         <div className={"flex flex-col gap-4"}>
             <div className={"flex flex-col gap-2"}>
-                {props.filamentColors.map(c => (
-                    <div className={"flex items-center gap-4"}>
-                        <div className={`flex items-center justify-center w-24 h-24 rounded-2xl clickable`} style={{backgroundColor: `#${c.hex}`}}/>
-                        <div>
-                            <p>{c.name}</p>
-                            <p>#{c.hex}</p>
-                            <ButtonGroup size={"sm"} variant={"tertiary"}>
-                                <Button>
-                                    <ChevronUpIcon/>
-                                </Button>
-                                <Button>
-                                    <ChevronDownIcon/>
-                                </Button>
-                                <Button>
-                                    <XIcon/>
-                                </Button>
-                            </ButtonGroup>
+                {
+                    props.filament.colors.map(c => (
+                        <div className={"flex items-center gap-4"}>
+                            <div
+                                className={`flex items-center justify-center w-24 h-24 rounded-2xl clickable`}
+                                style={{backgroundColor: `#${c.hex}`}}
+                            />
+                            <div>
+                                <p>{c.name}</p>
+                                <p>#{c.hex}</p>
+                                <ButtonGroup size={"sm"} variant={"tertiary"}>
+                                    <Button>
+                                        <ChevronUpIcon/>
+                                    </Button>
+                                    <Button>
+                                        <ChevronDownIcon/>
+                                    </Button>
+                                    <Button onClick={() => unassignColorClicked(c.id)}>
+                                        <TrashIcon/>
+                                    </Button>
+                                </ButtonGroup>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))
+                }
+                {
+                    props.filament.colors.length === 0 && (
+                        <Typography type={"body-sm"} color={"muted"}>This Filament has no colors</Typography>
+                    )
+                }
             </div>
             <TextField className={"flex gap-2"}>
-                <Select isRequired={true} className={"w-full"}>
+                <Select
+                    className={"w-full"}
+                    onChange={value => onAssignChange(value)}
+                >
                     <Label>Assign New Color...</Label>
                     <Select.Trigger>
                         <Select.Value/>
@@ -436,19 +499,21 @@ function ColorsSection(props: ColorsSectionProps) {
                     <Select.Popover>
                         <ListBox>
                             {
-                                allColors.map(c => (
-                                    <ListBox.Item>
-                                        <SelectionItem color={c}/>
+                                assignableColors.map(c => (
+                                    <ListBox.Item key={c.hex} id={c.hex} textValue={c.hex}>
+                                        <div className={"flex items-center gap-2.5"}>
+                                            <div className={"w-12 h-12 rounded-xl shadow"} style={{backgroundColor: `#${c.hex}`}} />
+                                            <div className={"flex flex-col gap-0.5"}>
+                                                <p>{c.name || ""}</p>
+                                                <p>#{c.hex}</p>
+                                            </div>
+                                        </div>
                                     </ListBox.Item>
                                 ))
                             }
                         </ListBox>
                     </Select.Popover>
                 </Select>
-                <Button variant={"tertiary"}>
-                    <CheckIcon/>
-                    Confirm
-                </Button>
             </TextField>
         </div>
     )

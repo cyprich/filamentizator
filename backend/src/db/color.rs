@@ -1,7 +1,7 @@
-use sqlx::{Database, query_as};
+use sqlx::query_as;
 
 use crate::{
-    db::{Builder, Pool},
+    db::{self, Builder, Pool},
     models::{Color, ColorNew, ColorUpdate},
 };
 
@@ -31,12 +31,12 @@ pub async fn update_color(pool: &Pool, id: i32, color: ColorUpdate) -> anyhow::R
     builder.push_bind(id);
 
     if let Some(val) = color.name {
-        builder.push(" name = ");
+        builder.push(", name = ");
         builder.push_bind(val);
     }
 
     if let Some(val) = color.hex {
-        builder.push(" hex = ");
+        builder.push(", hex = ");
         builder.push_bind(val);
     }
 
@@ -45,6 +45,7 @@ pub async fn update_color(pool: &Pool, id: i32, color: ColorUpdate) -> anyhow::R
     builder.push(" returning *");
 
     let color = builder.build_query_as::<Color>().fetch_one(pool).await?;
+
     Ok(color)
 }
 

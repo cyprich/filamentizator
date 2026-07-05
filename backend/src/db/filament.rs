@@ -181,10 +181,7 @@ pub async fn update_filament(
 }
 
 // TODO - maybe querying them all at once, and then grouping them would be better...
-pub async fn select_filament_colors<'e, E>(
-    executor: E,
-    filament_id: i32,
-) -> anyhow::Result<Vec<Color>>
+async fn select_filament_colors<'e, E>(executor: E, filament_id: i32) -> anyhow::Result<Vec<Color>>
 where
     E: sqlx::Executor<'e, Database = sqlx::Postgres>,
 {

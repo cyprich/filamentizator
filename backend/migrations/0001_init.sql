@@ -40,7 +40,7 @@ create table filament_color (
     filament_id integer not null references filament(id), 
     color_id integer not null references color(id), 
     position integer,
-    unique (filament_id, color_id, position)
+    unique (filament_id, color_id)
 );
 
 ---------- CREATE FUNCTIONS ----------

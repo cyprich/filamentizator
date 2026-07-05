@@ -31,7 +31,7 @@ export default function Home() {
 
     return (
         <main className={"flex flex-col gap-16"}>
-            <Typography color={"muted"} className={"-mb-14"}>Welcome to filamentizator!</Typography>
+            {/*<Typography color={"muted"} className={"-mb-14"}>Welcome to filamentizator!</Typography>*/}
             <Section
                 title={"Filaments"}
                 titleLink={"/filaments"}

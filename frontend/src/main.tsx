@@ -12,6 +12,7 @@ import PageNotFound from "./pages/PageNotFound.tsx";
 import Labels from "./pages/Labels.tsx";
 import { Toast } from "@heroui/react";
 import Filament from "./pages/Filament.tsx";
+import Colors from "./pages/Colors.tsx";
 
 export const BASE_URL = "http://localhost:5000/api/v3"
 
@@ -25,6 +26,7 @@ createRoot(document.getElementById('root')!).render(
                 <Route path={"/filaments"} element={ <Filaments/> }/>
                 <Route path={"/filaments/:id"} element={ <Filament/> }/>
                 <Route path={"/labels"} element={ <Labels/> }/>
+                <Route path={"/colors"} element={ <Colors/> }/>
                 <Route path={"/device"} element={ <Device/> }/>
                 <Route path={"/account"} element={ <Account/> }/>
                 <Route path={"*"} element={ <PageNotFound/> } />
