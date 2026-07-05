@@ -2,6 +2,7 @@ import {Card, Typography} from "@heroui/react";
 import type {Filament} from "../types/filament.ts";
 import {Link} from "react-router";
 import {BoxIcon, CoinsIcon, FactoryIcon, ThermometerIcon, WeightIcon} from "lucide-react";
+import GradientColorIndicator from "./GradientColorIndicator.tsx";
 
 export type FilamentCardProps = {
     filament: Filament;
@@ -20,6 +21,11 @@ export function SmallFilamentCard(props: FilamentCardProps) {
                 </Card.Title>
                 <Card.Content className={"flex flex-col gap-4"}>
                     <img src={undefined} alt={"image"} className={"w-full aspect-square border"}/>
+                    <GradientColorIndicator
+                        colors={props.filament.colors.map(c => `#${c.hex}`)}
+                        height={"sm"}
+                        className={"my-1"}
+                    />
                     <div className={"flex flex-col gap-2 *:flex *:gap-2"}>
                         <div>
                             <FactoryIcon/>
@@ -54,7 +60,6 @@ export function SmallFilamentCard(props: FilamentCardProps) {
         </Link>
     )
 }
-
 
 export function EmptySmallFilamentCard() {
     return (

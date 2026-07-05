@@ -1,13 +1,13 @@
 import {
     Card, ColorArea,
-    ColorField, ColorPicker, ColorSlider, Input,
+    ColorField, ColorPicker, ColorSlider,
     InputGroup,
-    Label, parseColor, Popover,
+    Label, Popover,
     TextField,
     toast,
     Typography
 } from "@heroui/react";
-import {useEffect, useState} from "react";
+import {type Dispatch, type SetStateAction, useEffect, useState} from "react";
 import type {Color} from "../types/color.ts";
 import axios from "axios";
 import {BASE_URL} from "../main.tsx";
@@ -47,17 +47,30 @@ export default function Colors() {
                 {
                     colors.map(c => (
                         <ColorCard
+                            key={c.id}
                             color={c}
+                            setColors={setColors}
                             filaments={filaments.filter(f => f.colors.map(c => c.id).includes(c.id))}
                         />
                     ))
                 }
             </div>
+            <div className={"my-8 border-b"}/>
+            <div>
+                <Typography type={"h4"}>Add new Color</Typography>
+                //TODO
+            </div>
         </main>
     )
 }
 
-function ColorCard(props: {color: Color, filaments: Filament[]}) {
+type ColorCardProps = {
+    color: Color;
+    setColors: Dispatch<SetStateAction<Color[]>>;
+    filaments: Filament[];
+}
+
+function ColorCard(props: ColorCardProps) {
     const [originalName, setOriginalName] = useState(props.color.name)
     const [originalHex, setOriginalHex] = useState(props.color.hex)
 
@@ -102,7 +115,16 @@ function ColorCard(props: {color: Color, filaments: Filament[]}) {
     }
 
     const deleteClicked = () => {
-
+        axios.delete<Color>(`${BASE_URL}/color/${props.color.id}`)
+            .then(resp => {
+                props.setColors(prev => prev.filter(c => c.id !== resp.data.id))
+            })
+            .catch(e => {
+                console.error(e)
+                toast.danger("Failed to delete color", {
+                    description: `${e}`
+                })
+            })
     }
 
     useEffect(() => {
@@ -215,7 +237,7 @@ function ColorCard(props: {color: Color, filaments: Filament[]}) {
                             </Popover.Dialog>
                         </Popover.Content>
                     </Popover>
-                    <TrashIcon className={"clickable-no-scale hover:text-danger"}/>
+                    <TrashIcon className={"clickable-no-scale hover:text-danger"} onClick={deleteClicked}/>
                 </div>
             </Card.Content>
         </Card>

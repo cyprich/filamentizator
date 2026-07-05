@@ -23,12 +23,11 @@ pub async fn insert_filament_color(
     let result = query_as!(
         FilamentColor,
         "insert into 
-        filament_color (filament_id, color_id, position) 
-        values ($1, $2, $3) 
+        filament_color (filament_id, color_id) 
+        values ($1, $2) 
         returning *",
         filament_color.filament_id,
         filament_color.color_id,
-        filament_color.position
     )
     .fetch_one(pool)
     .await?;
@@ -51,11 +50,6 @@ pub async fn update_filament_color(
 
     if let Some(val) = filament_color.color_id {
         builder.push(" , color_id = ");
-        builder.push_bind(val);
-    }
-
-    if let Some(val) = filament_color.position {
-        builder.push(" , position = ");
         builder.push_bind(val);
     }
 

@@ -194,7 +194,7 @@ where
         from color c 
         join filament_color f on c.id = f.color_id
         where f.filament_id = $1
-        order by f.position
+        order by f.color_id
         ",
         filament_id
     )

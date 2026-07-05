@@ -39,7 +39,6 @@ create table filament_color (
     id serial primary key,
     filament_id integer not null references filament(id), 
     color_id integer not null references color(id), 
-    position integer,
     unique (filament_id, color_id)
 );
 

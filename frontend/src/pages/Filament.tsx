@@ -1,5 +1,6 @@
 import {
-    Button, ButtonGroup, Drawer,
+    Badge,
+    Button, ButtonGroup, Chip, Drawer,
     InputGroup, type Key,
     Label,
     ListBox,
@@ -9,7 +10,7 @@ import {
     toast,
     Typography
 } from "@heroui/react";
-import {useParams} from "react-router";
+import {Link, useParams} from "react-router";
 import {type Dispatch, type SetStateAction, useEffect, useState} from "react";
 import {type Filament} from "../types/filament.ts";
 import axios from "axios";
@@ -454,28 +455,26 @@ function ColorsSection(props: ColorsSectionProps) {
 
     return (
         <div className={"flex flex-col gap-4"}>
-            <div className={"flex flex-col gap-2"}>
+            <div className={"flex flex-col gap-4"}>
                 {
                     props.filament.colors.map(c => (
                         <div className={"flex items-center gap-4"}>
                             <div
-                                className={`flex items-center justify-center w-24 h-24 rounded-2xl clickable`}
+                                className={`flex items-center justify-center w-24 h-24 rounded-2xl`}
                                 style={{backgroundColor: `#${c.hex}`}}
                             />
                             <div>
-                                <p>{c.name}</p>
+                                <Typography>{c.name}</Typography>
                                 <p>#{c.hex}</p>
-                                <ButtonGroup size={"sm"} variant={"tertiary"}>
-                                    <Button>
-                                        <ChevronUpIcon/>
-                                    </Button>
-                                    <Button>
-                                        <ChevronDownIcon/>
-                                    </Button>
-                                    <Button onClick={() => unassignColorClicked(c.id)}>
-                                        <TrashIcon/>
-                                    </Button>
-                                </ButtonGroup>
+                                <Chip
+                                    className={"clickable-no-scale mt-1"}
+                                    color={"danger"}
+                                    variant={"soft"}
+                                    onClick={() => unassignColorClicked(c.id)}
+                                >
+                                    <XIcon className={"size-4"}/>
+                                    Unassign
+                                </Chip>
                             </div>
                         </div>
                     ))
@@ -510,6 +509,13 @@ function ColorsSection(props: ColorsSectionProps) {
                                         </div>
                                     </ListBox.Item>
                                 ))
+                            }
+                            {
+                                assignableColors.length === 0 && (
+                                    <ListBox.Item isDisabled={true}>
+                                        <Typography type={"body-sm"} color={"muted"}>No available items...</Typography>
+                                    </ListBox.Item>
+                                )
                             }
                         </ListBox>
                     </Select.Popover>
