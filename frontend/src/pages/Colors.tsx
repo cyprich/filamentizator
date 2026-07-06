@@ -1,6 +1,8 @@
 import {
+    Badge,
+    Button,
     Card, ColorArea,
-    ColorField, ColorPicker, ColorSlider,
+    ColorField, ColorPicker, ColorSlider, Form, Input,
     InputGroup,
     Label, Popover,
     TextField,
@@ -56,10 +58,7 @@ export default function Colors() {
                 }
             </div>
             <div className={"my-8 border-b"}/>
-            <div>
-                <Typography type={"h4"}>Add new Color</Typography>
-                //TODO
-            </div>
+            <AddColorSection setColors={setColors}/>
         </main>
     )
 }
@@ -71,6 +70,7 @@ type ColorCardProps = {
 }
 
 function ColorCard(props: ColorCardProps) {
+    // TODO maybe merge this with the form component?
     const [originalName, setOriginalName] = useState(props.color.name)
     const [originalHex, setOriginalHex] = useState(props.color.hex)
 
@@ -78,8 +78,6 @@ function ColorCard(props: ColorCardProps) {
     const [hex, setHex] = useState<string>(props.color.hex)
 
     const [changes, setChanges] = useState<boolean>(false)
-
-    // const [isExpanded, setIsExpanded] = useState<boolean>(false)
 
     // thanks chatgpt for this code
     const r = parseInt(hex.slice(0, 2), 16);
@@ -206,7 +204,16 @@ function ColorCard(props: ColorCardProps) {
                     }
                     <Popover>
                         <Popover.Trigger>
-                            <SpoolIcon className={"clickable-no-scale hover:text-blue-600"}/>
+                            <Badge.Anchor>
+                                <SpoolIcon className={"clickable-no-scale hover:text-accent"}/>
+                                <Badge
+                                    size={"sm"}
+                                    color={props.filaments.length > 0 ? "accent" : "danger"}
+                                    variant={"secondary"}
+                                >
+                                    {props.filaments.length}
+                                </Badge>
+                            </Badge.Anchor>
                         </Popover.Trigger>
                         <Popover.Content placement={"left"}>
                             <Popover.Dialog>
@@ -241,5 +248,98 @@ function ColorCard(props: ColorCardProps) {
                 </div>
             </Card.Content>
         </Card>
+    )
+}
+
+function AddColorSection(props: {setColors: Dispatch<SetStateAction<Color[]>>}) {
+    const defaultHexValue = "00A6F4"
+    const [name, setName] = useState<string | undefined>(undefined)
+    const [hex, setHex] = useState<string>(defaultHexValue)
+
+    const confirmClicked = () => {
+        axios.post<Color>(`${BASE_URL}/color`, {
+            name: name,
+            hex: hex
+        })
+            .then(resp => {
+                props.setColors(prev => [
+                    ...prev,
+                    resp.data
+                ])
+                cancelClicked()
+            })
+            .catch(e => {
+                console.error(e)
+                toast.danger("Failed to create new color", {
+                    description: `${e}`
+                })
+            })
+    }
+
+    const cancelClicked = () => {
+        setName(undefined)
+        setHex(defaultHexValue)
+    }
+
+    return (
+        <div>
+            <Typography type={"h4"}>Add new Color</Typography>
+            <Form className={"flex flex-col gap-4 mt-2 max-w-125"}>
+                <div className={"flex gap-4"}>
+                    <ColorPicker
+                        defaultValue={`#${hex}`}
+                        onChange={val => setHex(val.toString("hex").slice(1))}
+                    >
+                        <ColorPicker.Trigger>
+                            <div
+                                className={"flex justify-center items-center h-full w-22 rounded-xl clickable group"}
+                                style={{backgroundColor: `#${hex}`}}
+                            />
+                        </ColorPicker.Trigger>
+                        <ColorPicker.Popover>
+                            <ColorArea
+                                colorSpace={"hsb"}
+                                xChannel={"saturation"}
+                                yChannel={"brightness"}
+                            >
+                                <ColorArea.Thumb/>
+                            </ColorArea>
+                            <ColorSlider channel={"hue"} colorSpace={"hsb"}>
+                                <Label>Hue</Label>
+                                <ColorSlider.Output/>
+                                <ColorSlider.Track>
+                                    <ColorSlider.Thumb/>
+                                </ColorSlider.Track>
+                            </ColorSlider>
+                        </ColorPicker.Popover>
+                    </ColorPicker>
+                    <div className={"flex flex-col gap-2 w-full"}>
+                        <TextField>
+                            <Label>Name</Label>
+                            <Input
+                                placeholder={"Enter Name..."}
+                                value={name || ""}
+                                onChange={e => setName(e.target.value)}
+                                type={"string"}
+                            />
+                        </TextField>
+                        <ColorField isRequired={true}>
+                            <Label>Color</Label>
+                            <ColorField.Group>
+                                <ColorField.Prefix>#</ColorField.Prefix>
+                                <ColorField.Input
+                                    value={hex}
+                                    onChange={e => setHex(e.target.value)}
+                                />
+                            </ColorField.Group>
+                        </ColorField>
+                    </div>
+                </div>
+                <div className={"flex gap-2"}>
+                    <Button className={"px-6"} onClick={confirmClicked}>Confirm</Button>
+                    <Button variant={"secondary"} onClick={cancelClicked}>Cancel</Button>
+                </div>
+            </Form>
+        </div>
     )
 }

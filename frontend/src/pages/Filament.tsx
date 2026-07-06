@@ -1,6 +1,5 @@
 import {
-    Badge,
-    Button, ButtonGroup, Chip, Drawer,
+    Button, Chip, Drawer,
     InputGroup, type Key,
     Label,
     ListBox,
@@ -20,10 +19,10 @@ import type {Vendor} from "../types/vendor.ts";
 import type {Material} from "../types/material.ts";
 import type {Color} from "../types/color.ts";
 import {
-    CheckIcon, ChevronDownIcon, ChevronUpIcon, CircleQuestionMarkIcon,
+    CheckIcon, ChevronRightIcon, CircleQuestionMarkIcon,
     PaintbrushIcon,
     PencilIcon, SpoolIcon,
-    ThermometerIcon, TrashIcon,
+    ThermometerIcon,
     WeightIcon,
     XIcon
 } from "lucide-react";
@@ -92,11 +91,6 @@ export default function Filament() {
         )
     }
 
-    // const filamentColorGradient = () => {
-    //     let c = filament.colors.map(c => (`, #${c.hex}`))
-    //     return `linear-gradient(to left ${c} )`
-    // }
-
     return (
         <main>
             <Typography type={"h2"}>{filament.name}</Typography>
@@ -145,10 +139,11 @@ export default function Filament() {
                     <GeneralTempSection type={"Bed"} min={filament.temp.bed_min} max={filament.temp.bed_max}/>
                 </div>
                 <div>
-                    <div className={"flex items-center gap-1.5 -mb-4"}>
+                    <Link className={"flex items-center gap-1.5 -mb-4 group"} to={"/colors"}>
                         <PaintbrushIcon className={"size-7"}/>
                         <Typography type={"h3"}>Colors</Typography>
-                    </div>
+                        <ChevronRightIcon className={"opacity-0 group-hover:opacity-100 mt-1"}/>
+                    </Link>
                     <ColorsSection filament={filament} setFilament={setFilament}/>
                 </div>
             </div>
@@ -383,7 +378,7 @@ function GeneralTempSection(props: GeneralTempSectionProps) {
 
 type ColorsSectionProps = {
     filament: Filament;
-    setFilament: Dispatch<SetStateAction<Filament>>
+    setFilament: Dispatch<SetStateAction<Filament | undefined>>
 }
 
 function ColorsSection(props: ColorsSectionProps) {
@@ -415,10 +410,13 @@ function ColorsSection(props: ColorsSectionProps) {
     function unassignColorClicked(color_id: number) {
         axios.delete<Color>(`${BASE_URL}/filament/${props.filament.id}/color/${color_id}`)
             .then(resp => {
-                props.setFilament(prev => ({
-                    ...prev,
-                    colors: prev.colors.filter(c => c.id !== resp.data.id)
-                }))
+                props.setFilament(prev => prev
+                    ? {
+                        ...prev,
+                        colors: prev.colors.filter(c => c.id !== resp.data.id)
+                    }
+                    : undefined
+                )
             })
             .catch(e => {
                 console.error(e)
