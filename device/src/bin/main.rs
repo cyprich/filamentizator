@@ -7,7 +7,7 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
-use device::models::Filament;
+use device::{models::Filament, wifi};
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use esp_hal::{
@@ -50,14 +50,16 @@ async fn main(spawner: Spawner) -> ! {
 
     info!("Embassy initialized!");
 
-    let (mut _wifi_controller, _interfaces) =
-        esp_radio::wifi::new(peripherals.WIFI, Default::default())
-            .expect("Failed to initialize Wi-Fi controller");
+    // let (mut wifi_controller, interfaces) =
+    //     esp_radio::wifi::new(peripherals.WIFI, Default::default())
+    //         .expect("Failed to initialize Wi-Fi controller");
 
     // TODO: Spawn some tasks
     let _ = spawner;
 
     //////////////////////////////////////////////////////////////////////////////////////////
+
+    wifi::run(peripherals.WIFI, spawner).await;
 
     let mut led = Output::new(
         peripherals.GPIO4,

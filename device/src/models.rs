@@ -1,5 +1,3 @@
-#![no_std]
-
 use super::MAX_COLOR_COUNT;
 use super::MAX_STRING_LENGTH;
 use heapless::{String, Vec};
