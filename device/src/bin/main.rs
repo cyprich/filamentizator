@@ -7,6 +7,7 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
+use device::models::Filament;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use esp_hal::{
@@ -21,8 +22,6 @@ fn panic(panic_info: &core::panic::PanicInfo) -> ! {
     error!("{}", panic_info);
     loop {}
 }
-
-extern crate alloc;
 
 // This creates a default app-descriptor required by the esp-idf bootloader.
 // For more information see: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/app_image_format.html#application-description>
@@ -67,6 +66,9 @@ async fn main(spawner: Spawner) -> ! {
     );
 
     let mut state = true;
+
+    let f = Filament::default();
+    info!("Filament initialized!: {:?}", f);
 
     loop {
         Timer::after(Duration::from_secs(1)).await;
