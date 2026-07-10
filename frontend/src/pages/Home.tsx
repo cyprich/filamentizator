@@ -74,7 +74,7 @@ function Section(props: SectionProps) {
                     ? <Link to={props.titleLink}
                             className={"flex items-center gap-1 group clickable hover:scale-100! w-max"}>
                         <Typography type={"h2"}>{props.title}</Typography>
-                        <ChevronRight className={"opacity-10 group-hover:opacity-100 size-8"}/>
+                        <ChevronRight className={"opacity-10 group-hover:opacity-100 size-8 mt-1"}/>
 
                     </Link>
                     : <Typography type={"h2"}>{props.title}</Typography>

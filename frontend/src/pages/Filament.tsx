@@ -142,7 +142,7 @@ export default function Filament() {
                     <Link className={"flex items-center gap-1.5 -mb-4 group"} to={"/colors"}>
                         <PaintbrushIcon className={"size-7"}/>
                         <Typography type={"h3"}>Colors</Typography>
-                        <ChevronRightIcon className={"opacity-0 group-hover:opacity-100 mt-1"}/>
+                        <ChevronRightIcon className={"size-7 opacity-10 group-hover:opacity-100 mt-1"}/>
                     </Link>
                     <ColorsSection filament={filament} setFilament={setFilament}/>
                 </div>

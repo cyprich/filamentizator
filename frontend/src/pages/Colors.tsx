@@ -240,6 +240,7 @@ function ColorCard(props: ColorCardProps) {
                                             ))
                                             : <Typography color={"muted"} type={"body-sm"}>No associated filaments</Typography>
                                     }
+                                    {/* TODO associate new filament? */}
                                 </div>
                             </Popover.Dialog>
                         </Popover.Content>
