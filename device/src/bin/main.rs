@@ -7,14 +7,18 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
-use esp_hal::clock::CpuClock;
-use esp_hal::gpio::{Output, OutputConfig};
-use esp_hal::main;
-use esp_hal::time::{Duration, Instant};
-use esp_hal::timer::timg::TimerGroup;
+use embassy_executor::Spawner;
+use embassy_time::{Duration, Timer};
+use esp_hal::{
+    clock::CpuClock,
+    gpio::{Output, OutputConfig},
+    timer::timg::TimerGroup,
+};
+use log::{error, info};
 
 #[panic_handler]
-fn panic(_: &core::panic::PanicInfo) -> ! {
+fn panic(panic_info: &core::panic::PanicInfo) -> ! {
+    error!("{}", panic_info);
     loop {}
 }
 
@@ -28,10 +32,12 @@ esp_bootloader_esp_idf::esp_app_desc!();
     clippy::large_stack_frames,
     reason = "it's not unusual to allocate larger buffers etc. in main"
 )]
-#[main]
-fn main() -> ! {
+#[esp_rtos::main]
+async fn main(spawner: Spawner) -> ! {
     // generator version: 1.3.0
-    // generator parameters: --chip esp32s3 -o alloc -o unstable-hal -o wifi -o neovim
+    // generator parameters: --chip esp32s3 -o unstable-hal -o alloc -o wifi -o embassy -o log -o neovim
+
+    esp_println::logger::init_logger_from_env();
 
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let peripherals = esp_hal::init(config);
@@ -42,11 +48,17 @@ fn main() -> ! {
     let sw_interrupt =
         esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);
     esp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);
+
+    info!("Embassy initialized!");
+
     let (mut _wifi_controller, _interfaces) =
         esp_radio::wifi::new(peripherals.WIFI, Default::default())
             .expect("Failed to initialize Wi-Fi controller");
 
-    ///////////////////////////////////////////////////////////////////////////////////////////
+    // TODO: Spawn some tasks
+    let _ = spawner;
+
+    //////////////////////////////////////////////////////////////////////////////////////////
 
     let mut led = Output::new(
         peripherals.GPIO4,
@@ -57,8 +69,7 @@ fn main() -> ! {
     let mut state = true;
 
     loop {
-        let delay_start = Instant::now();
-        while delay_start.elapsed() < Duration::from_millis(500) {}
+        Timer::after(Duration::from_secs(1)).await;
 
         led.set_level(if state {
             esp_hal::gpio::Level::Low
