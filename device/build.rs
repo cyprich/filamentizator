@@ -1,4 +1,14 @@
 fn main() {
+    dotenvy::dotenv().ok();
+
+    let env_vars_to_load = ["WIFI_SSID", "WIFI_PASSWORD"];
+
+    for var in env_vars_to_load {
+        if let Ok(val) = std::env::var(var) {
+            println!("cargo:rustc-env={}={}", var, val)
+        }
+    }
+
     linker_be_nice();
     // make sure linkall.x is the last linker script (otherwise might cause problems with flip-link)
     println!("cargo:rustc-link-arg=-Tlinkall.x");

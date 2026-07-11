@@ -6,6 +6,9 @@ pub mod wifi;
 pub const MAX_STRING_LENGTH: usize = 64;
 pub const MAX_COLOR_COUNT: usize = 16;
 
+pub const WIFI_SSID: Option<&str> = option_env!("WIFI_SSID");
+pub const WIFI_PASSWORD: Option<&str> = option_env!("WIFI_PASSWORD");
+
 #[macro_export]
 macro_rules! mk_static {
     ($t:ty, $val:expr) => {{

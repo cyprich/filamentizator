@@ -7,19 +7,20 @@ use esp_radio::wifi::{
 };
 use log::{error, info};
 
-use crate::mk_static;
+use crate::{WIFI_PASSWORD, WIFI_SSID, mk_static};
 
 // https://docs.espressif.com/projects/rust/no_std-training/03_6_http_client.html
 
 pub async fn run(peripherals_wifi: WIFI<'static>, spawner: Spawner) {
-    // TODO: load from env? or make user-configurable later
-    let ssid = "secret";
-    let pass = "secret";
+    if WIFI_SSID.is_none() || WIFI_PASSWORD.is_none() {
+        error!("wifi ssid or password is not set");
+        panic!()
+    }
 
     let station_config = esp_radio::wifi::Config::Station(
         StationConfig::default()
-            .with_ssid(ssid)
-            .with_password(pass.into()),
+            .with_ssid(WIFI_SSID.unwrap())
+            .with_password(WIFI_PASSWORD.unwrap().into()),
     );
 
     let result = esp_radio::wifi::new(
