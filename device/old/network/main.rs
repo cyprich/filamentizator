@@ -99,7 +99,6 @@ async fn main(spawner: Spawner) -> ! {
 }
 
 async fn run_wifi(peripherals_wifi: WIFI<'static>, spawner: Spawner) {
-    info!("ssid:{}", SSID);
     let station_config = esp_radio::wifi::Config::Station(
         StationConfig::default()
             .with_ssid(SSID)

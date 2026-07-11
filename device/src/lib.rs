@@ -1,13 +1,18 @@
 #![no_std]
 
+pub mod client;
 pub mod models;
 pub mod wifi;
 
 pub const MAX_STRING_LENGTH: usize = 64;
+pub const MAX_FILAMENT_COUNT: usize = 32;
 pub const MAX_COLOR_COUNT: usize = 16;
 
 pub const WIFI_SSID: Option<&str> = option_env!("WIFI_SSID");
 pub const WIFI_PASSWORD: Option<&str> = option_env!("WIFI_PASSWORD");
+
+// TODO: user-configurable via env vars
+pub const BASE_URL: &str = "http://192.168.88.115:5000";
 
 #[macro_export]
 macro_rules! mk_static {

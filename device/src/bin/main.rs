@@ -7,14 +7,11 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
-use device::{models::Filament, wifi};
+use device::{client::ApiClient, wifi};
 use embassy_executor::Spawner;
+use embassy_net::tcp::client::{TcpClient, TcpClientState};
 use embassy_time::{Duration, Timer};
-use esp_hal::{
-    clock::CpuClock,
-    gpio::{Output, OutputConfig},
-    timer::timg::TimerGroup,
-};
+use esp_hal::{clock::CpuClock, timer::timg::TimerGroup};
 use log::{error, info};
 
 #[panic_handler]
@@ -59,14 +56,18 @@ async fn main(spawner: Spawner) -> ! {
 
     //////////////////////////////////////////////////////////////////////////////////////////
 
-    wifi::run(peripherals.WIFI, spawner).await;
+    let stack = wifi::init(peripherals.WIFI, spawner).await;
 
-    let f = Filament::default();
-    info!("Filament initialized!: {:?}", f);
+    let api = ApiClient::new(stack);
+    let filaments = api.get_filaments().await;
+
+    info!("running");
 
     loop {
         Timer::after(Duration::from_secs(1)).await;
     }
+
+    // TODO: disconnect wifi
 
     // for inspiration have a look at the examples at https://github.com/esp-rs/esp-hal/tree/esp-hal-v1.1.0/examples
 }

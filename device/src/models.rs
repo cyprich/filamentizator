@@ -1,21 +1,23 @@
 use super::MAX_COLOR_COUNT;
 use super::MAX_STRING_LENGTH;
 use heapless::{String, Vec};
+use serde::Deserialize;
+use serde::Serialize;
 use time::OffsetDateTime;
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Vendor {
     id: i32,
     name: String<MAX_STRING_LENGTH>,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Material {
     id: i32,
     name: String<MAX_STRING_LENGTH>,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Temp {
     pub min: i32,
     pub max: Option<i32>,
@@ -23,14 +25,14 @@ pub struct Temp {
     pub bed_max: Option<i32>,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Weight {
     pub original: i32,
     pub net: i32,
     pub spool: i32,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Color {
     pub id: i32,
     pub name: Option<String<MAX_STRING_LENGTH>>,
@@ -38,7 +40,7 @@ pub struct Color {
     pub hex: String<6>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Filament {
     pub id: i32,
     pub name: String<MAX_STRING_LENGTH>,
@@ -48,8 +50,8 @@ pub struct Filament {
     pub weight: Weight,
     pub price: f32,
     pub colors: Vec<Color, MAX_COLOR_COUNT>,
-    pub date_created: OffsetDateTime,
-    pub date_updated: OffsetDateTime,
+    // pub date_created: OffsetDateTime,
+    // pub date_updated: OffsetDateTime,
 }
 
 impl Default for Filament {
@@ -63,8 +65,8 @@ impl Default for Filament {
             weight: Default::default(),
             price: Default::default(),
             colors: Default::default(),
-            date_created: OffsetDateTime::from_unix_timestamp(0).unwrap(),
-            date_updated: OffsetDateTime::from_unix_timestamp(0).unwrap(),
+            // date_created: OffsetDateTime::from_unix_timestamp(0).unwrap(),
+            // date_updated: OffsetDateTime::from_unix_timestamp(0).unwrap(),
         }
     }
 }
