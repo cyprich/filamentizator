@@ -27,6 +27,7 @@ async fn main() -> anyhow::Result<()> {
                     .service(get_material)
                     .service(get_filament)
                     .service(get_filament_by_id)
+                    .service(get_filament_simple)
                     .service(get_color)
                     .service(get_filament_color)
                     .service(post_vendor)
