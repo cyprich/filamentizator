@@ -61,26 +61,11 @@ async fn main(spawner: Spawner) -> ! {
 
     wifi::run(peripherals.WIFI, spawner).await;
 
-    let mut led = Output::new(
-        peripherals.GPIO4,
-        esp_hal::gpio::Level::Low,
-        OutputConfig::default(),
-    );
-
-    let mut state = true;
-
     let f = Filament::default();
     info!("Filament initialized!: {:?}", f);
 
     loop {
         Timer::after(Duration::from_secs(1)).await;
-
-        led.set_level(if state {
-            esp_hal::gpio::Level::Low
-        } else {
-            esp_hal::gpio::Level::High
-        });
-        state = !state;
     }
 
     // for inspiration have a look at the examples at https://github.com/esp-rs/esp-hal/tree/esp-hal-v1.1.0/examples
