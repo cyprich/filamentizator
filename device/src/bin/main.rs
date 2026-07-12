@@ -9,7 +9,6 @@
 
 use device::{client::ApiClient, wifi};
 use embassy_executor::Spawner;
-use embassy_net::tcp::client::{TcpClient, TcpClientState};
 use embassy_time::{Duration, Timer};
 use esp_hal::{clock::CpuClock, timer::timg::TimerGroup};
 use log::{error, info};
@@ -60,6 +59,7 @@ async fn main(spawner: Spawner) -> ! {
 
     let api = ApiClient::new(stack);
     let filaments = api.get_filaments().await;
+    info!("got filaments: {:?}", filaments);
 
     info!("running");
 

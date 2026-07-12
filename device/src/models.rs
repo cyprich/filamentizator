@@ -70,3 +70,11 @@ impl Default for Filament {
         }
     }
 }
+
+#[derive(Default, Debug, Serialize, Deserialize)]
+pub struct FilamentSimple {
+    pub id: i32,
+    pub name: String<MAX_STRING_LENGTH>,
+    pub vendor_name: String<MAX_STRING_LENGTH>,
+    pub material_name: String<MAX_STRING_LENGTH>,
+}

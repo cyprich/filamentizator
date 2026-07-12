@@ -5,8 +5,8 @@ pub mod models;
 pub mod wifi;
 
 pub const MAX_STRING_LENGTH: usize = 64;
-pub const MAX_FILAMENT_COUNT: usize = 32;
-pub const MAX_COLOR_COUNT: usize = 16;
+pub const MAX_FILAMENT_COUNT: usize = 4;
+pub const MAX_COLOR_COUNT: usize = 4;
 
 pub const WIFI_SSID: Option<&str> = option_env!("WIFI_SSID");
 pub const WIFI_PASSWORD: Option<&str> = option_env!("WIFI_PASSWORD");
