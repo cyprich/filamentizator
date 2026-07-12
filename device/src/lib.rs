@@ -3,6 +3,7 @@
 pub mod client;
 pub mod error;
 pub mod models;
+pub mod ui;
 pub mod wifi;
 
 pub use error::Error;

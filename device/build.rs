@@ -1,12 +1,20 @@
 fn main() {
+    // load env vars from `.env` file
     dotenvy::dotenv().ok();
 
+    // compile with these env variables
     let env_vars_to_load = ["WIFI_SSID", "WIFI_PASSWORD"];
-
     for var in env_vars_to_load {
         if let Ok(val) = std::env::var(var) {
             println!("cargo:rustc-env={}={}", var, val)
         }
+    }
+
+    // display driver
+    let driver = std::env::var("DISPLAY_DRIVER").unwrap_or_default();
+    match driver.as_str() {
+        "ssh1103" => println!("cargo:rustc-cfg=display_ssh1103"),
+        _ => println!("cargo:rustc-cfg=display_ssd1306"), // ssd1306 by default
     }
 
     linker_be_nice();

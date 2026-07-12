@@ -65,6 +65,8 @@ time = { version = "0.3.53", default-features = false, features = ["serde"] }
 reqwless = { version = "0.14.0", default-features = false }
 serde-json-core = "0.6.0"
 serde = { version = "1.0.228", default-features = false, features = ["derive"] }
+ssd1306 = { version = "0.10.0", features = ["async"] }
+embedded-graphics = "0.8.2"
 
 [build-dependencies]
 dotenvy = "0.15.7"
