@@ -17,6 +17,12 @@ fn main() {
         _ => println!("cargo:rustc-cfg=display_ssd1306"), // ssd1306 by default
     }
 
+    // these cfgs are valid
+    println!("cargo:rustc-check-cfg=cfg(display_ssd1306)");
+    println!("cargo:rustc-check-cfg=cfg(display_ssh1103)");
+
+    /////////////////////////////////////////////////////////////////
+
     linker_be_nice();
     // make sure linkall.x is the last linker script (otherwise might cause problems with flip-link)
     println!("cargo:rustc-link-arg=-Tlinkall.x");

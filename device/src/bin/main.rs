@@ -7,29 +7,18 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
-use device::{client::ApiClient, wifi};
+use device::ui::Screen;
+#[allow(unused_imports)]
+use device::{client::ApiClient, display::Display, ui::UI, wifi};
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
-use embedded_graphics::{
-    mono_font::{
-        MonoTextStyle, MonoTextStyleBuilder,
-        ascii::{FONT_5X7, FONT_6X12, FONT_8X13},
-    },
-    pixelcolor::BinaryColor,
-    prelude::{Point, *},
-    text::{Baseline, Text},
-};
-use esp_hal::{clock::CpuClock, i2c::master::I2c, time::Rate, timer::timg::TimerGroup};
-use esp_println::dbg;
-use heapless::format;
-use log::{error, info, warn};
+use esp_hal::{clock::CpuClock, timer::timg::TimerGroup};
+use log::{error, info};
 
 use esp_hal::i2c::master::Config as I2cConfig;
-use esp_hal::i2c::master::Config;
-use serde_json_core::heapless::String;
-use ssd1306::{I2CDisplayInterface, Ssd1306, Ssd1306Async, mode::DisplayConfigAsync, prelude::*};
-
-use core::fmt::Write;
+use esp_hal::i2c::master::I2c;
+use esp_hal::time::Rate;
+use ssd1306::{I2CDisplayInterface, Ssd1306Async, prelude::*};
 
 #[panic_handler]
 fn panic(panic_info: &core::panic::PanicInfo) -> ! {
@@ -73,60 +62,42 @@ async fn main(spawner: Spawner) -> ! {
 
     //////////////////////////////////////////////////////////////////////////////////////////
 
-    // let stack = wifi::init(peripherals.WIFI, spawner).await;
-    //
-    // let api = ApiClient::new(stack);
-    // let filaments = match api.get_filaments().await {
-    //     Ok(val) => val,
-    //     Err(e) => {
-    //         error!("Failed to get Filaments: {:?}", e);
-    //         panic!()
-    //     }
-    // };
+    // init and clear display
+    let mut display = Display::new(peripherals.I2C0, peripherals.GPIO8, peripherals.GPIO9);
+    display.init().await;
+    display.clear().await;
+    display.flush().await;
 
-    //////////////////////////////////////////////////////////////////////////////////////////
+    // init ui and show welcome screen
+    let mut ui = UI::new();
+    ui.draw(&mut display).await;
+    display.flush().await;
 
-    let i2c_bus = I2c::new(
-        peripherals.I2C0,
-        I2cConfig::default().with_frequency(Rate::from_khz(100)),
-    );
+    // init wifi and api client
+    let stack = wifi::init(peripherals.WIFI, spawner).await;
+    let api = ApiClient::new(stack);
 
-    let i2c_bus = i2c_bus
-        .unwrap()
-        .with_scl(peripherals.GPIO8)
-        .with_sda(peripherals.GPIO9)
-        .into_async();
+    // init filamets
+    let filaments = match api.get_filaments().await {
+        Ok(val) => val,
+        Err(e) => {
+            // TODO: display this
+            error!("Failed to get Filaments: {:?}", e);
+            panic!()
+        }
+    };
 
-    let i2c_interface = I2CDisplayInterface::new(i2c_bus);
-
-    // TODO: use ssh1106 driver for the other display
-    #[cfg(display_ssh1103)]
-    todo!("");
-
-    let mut display = Ssd1306Async::new(i2c_interface, DisplaySize128x32, DisplayRotation::Rotate0)
-        .into_buffered_graphics_mode();
-
-    display.init().await.unwrap();
-
-    let text_style = MonoTextStyleBuilder::new()
-        .font(&FONT_5X7)
-        .text_color(BinaryColor::On)
-        .build();
-
-    let text = Text::with_baseline("Hello, Rust!", Point::new(8, 8), text_style, Baseline::Top);
-
-    display.clear(BinaryColor::On).unwrap();
-    display.flush().await.unwrap();
-    Timer::after(Duration::from_secs(1)).await;
-
-    display.clear(BinaryColor::Off).unwrap();
-    text.draw(&mut display).unwrap();
-    display.flush().await.unwrap();
+    // show filaments screen
+    ui.switch_screen(Screen::Filaments(filaments));
 
     info!("running");
 
     loop {
-        Timer::after(Duration::from_secs(1)).await;
+        display.clear().await;
+        ui.draw(&mut display).await;
+        display.flush().await;
+
+        Timer::after(Duration::from_secs(2)).await;
     }
 
     // TODO: disconnect wifi

@@ -1,5 +1,3 @@
-use core::fmt::Display;
-
 use heapless::String;
 
 use super::MAX_STRING_LENGTH;
@@ -11,6 +9,7 @@ pub enum Error {
     Reqwless(reqwless::Error),
     SerdeJson(serde_json_core::de::Error),
     Format(core::fmt::Error),
+    SsdDisplayError,
 }
 
 impl From<String<MAX_STRING_LENGTH>> for Error {

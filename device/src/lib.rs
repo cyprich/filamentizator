@@ -1,6 +1,7 @@
 #![no_std]
 
 pub mod client;
+pub mod display;
 pub mod error;
 pub mod models;
 pub mod ui;

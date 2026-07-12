@@ -3,7 +3,7 @@ use super::MAX_STRING_LENGTH;
 use heapless::{String, Vec};
 use serde::Deserialize;
 use serde::Serialize;
-use time::OffsetDateTime;
+// use time::OffsetDateTime;
 
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Vendor {

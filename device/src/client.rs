@@ -5,7 +5,6 @@ use embassy_net::{
     tcp::client::{TcpClient, TcpClientState},
 };
 use heapless::{String, Vec};
-use log::error;
 use reqwless::{client::HttpClient, request::Method};
 
 use crate::{
