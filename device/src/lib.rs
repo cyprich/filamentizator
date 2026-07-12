@@ -1,8 +1,11 @@
 #![no_std]
 
 pub mod client;
+pub mod error;
 pub mod models;
 pub mod wifi;
+
+pub use error::Error;
 
 pub const MAX_STRING_LENGTH: usize = 64;
 pub const MAX_FILAMENT_COUNT: usize = 4;

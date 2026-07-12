@@ -7,9 +7,11 @@ use embassy_net::{
 use heapless::{String, Vec};
 use log::error;
 use reqwless::{client::HttpClient, request::Method};
-use serde_json_core::de::Error;
 
-use crate::{BASE_URL, MAX_FILAMENT_COUNT, mk_static, models::Filament};
+use crate::{
+    BASE_URL, Error, MAX_COLOR_COUNT, MAX_FILAMENT_COUNT, MAX_STRING_LENGTH, mk_static,
+    models::Filament,
+};
 
 pub struct ApiClient<'a> {
     // stack: &'static Stack<'static>,
@@ -30,47 +32,40 @@ impl<'a> ApiClient<'a> {
         }
     }
 
-    pub async fn get_filaments(&self) -> Vec<Filament, MAX_FILAMENT_COUNT> {
+    async fn general_request<T>(&self, method: Method, endpoint: &str) -> Result<T, Error>
+    where
+        T: for<'de> serde::Deserialize<'de>,
+    {
         let mut client = HttpClient::new(&self.tcp, &self.dns);
 
         // construct URL
         let mut url = String::<256>::new();
-        let result = write!(
-            &mut url,
-            "{}/api/v3/filament?limit={}",
-            BASE_URL, MAX_FILAMENT_COUNT
-        );
-
-        if let Err(val) = result {
-            error!("failed composing url: {}", val);
-            todo!()
-        }
+        write!(&mut url, "{}/api/v3/{}", BASE_URL, endpoint)?;
 
         // receive buffer
         let mut rx_buf = [0u8; 4096];
 
-        let mut req = client.request(Method::GET, &url).await.unwrap();
-        let resp = req.send(&mut rx_buf).await.unwrap();
+        // request, response, response body
+        let mut req = client.request(method, &url).await?;
+        let resp = req.send(&mut rx_buf).await?;
+        let body = resp.body().read_to_end().await?;
 
-        let body = match resp.body().read_to_end().await {
-            Ok(val) => val,
-            Err(err) => {
-                error!("error reading response body: {}", err);
-                todo!()
-            }
-        };
+        // deserialize
+        let (result, _): (T, usize) = serde_json_core::from_slice(body)?;
 
-        let result: Result<(Vec<Filament, MAX_FILAMENT_COUNT>, usize), Error> =
-            serde_json_core::from_slice(body);
+        Ok(result)
+    }
 
-        let data = match result {
-            Ok((filaments, _)) => filaments,
-            Err(err) => {
-                error!("  error deserializing: {}", err);
-                todo!()
-            }
-        };
+    pub async fn get_filaments(&self) -> Result<Vec<Filament, MAX_FILAMENT_COUNT>, Error> {
+        let mut endpoint = String::<256>::new();
+        write!(
+            &mut endpoint,
+            "/filament?max_filament_count={}&max_color_count={}&max_string_length={}",
+            MAX_FILAMENT_COUNT, MAX_COLOR_COUNT, MAX_STRING_LENGTH
+        )?;
 
-        data
+        let filaments = self.general_request(Method::GET, &endpoint).await?;
+
+        Ok(filaments)
     }
 }

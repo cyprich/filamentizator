@@ -58,8 +58,13 @@ async fn main(spawner: Spawner) -> ! {
     let stack = wifi::init(peripherals.WIFI, spawner).await;
 
     let api = ApiClient::new(stack);
-    let filaments = api.get_filaments().await;
-    info!("got filaments: {:?}", filaments);
+    let filaments = match api.get_filaments().await {
+        Ok(val) => val,
+        Err(e) => {
+            error!("Failed to get Filaments: {:?}", e);
+            panic!()
+        }
+    };
 
     info!("running");
 
