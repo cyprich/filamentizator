@@ -1,17 +1,15 @@
 use embassy_executor::Spawner;
-use embassy_net::{Runner, StackResources};
+use embassy_net::{Runner, Stack, StackResources};
 use embassy_time::Timer;
 use esp_hal::{peripherals::WIFI, rng::Rng};
-use esp_radio::wifi::{
-    Interface, Interfaces, WifiController, scan::ScanConfig, sta::StationConfig,
-};
+use esp_radio::wifi::{Interface, WifiController, scan::ScanConfig, sta::StationConfig};
 use log::{error, info};
 
 use crate::{WIFI_PASSWORD, WIFI_SSID, mk_static};
 
 // https://docs.espressif.com/projects/rust/no_std-training/03_6_http_client.html
 
-pub async fn run(peripherals_wifi: WIFI<'static>, spawner: Spawner) {
+pub async fn init(peripherals_wifi: WIFI<'static>, spawner: Spawner) -> Stack<'static> {
     if WIFI_SSID.is_none() || WIFI_PASSWORD.is_none() {
         error!("wifi ssid or password is not set");
         panic!()
@@ -72,6 +70,10 @@ pub async fn run(peripherals_wifi: WIFI<'static>, spawner: Spawner) {
         info!("  gateway: {:?}", config.gateway);
         info!("  dns servers: {:?}", config.dns_servers);
     }
+
+    let stack = mk_static!(Stack<'static>, stack);
+
+    *stack
 }
 
 #[embassy_executor::task]

@@ -28,6 +28,7 @@ embassy-net = { version = "0.9.1", features = [
   "medium-ethernet",
   "tcp",
   "udp",
+  "dns",
 ] }
 embedded-io = "0.7.1"
 embedded-io-async = "0.7.0"
@@ -59,8 +60,11 @@ smoltcp = { version = "0.13.0", default-features = false, features = [
 
 critical-section = "1.2.0"
 static_cell = "2.1.1"
-heapless = "0.9.3"
+heapless = { version = "0.9.3", features = ["serde"] }
 time = { version = "0.3.53", default-features = false, features = ["serde"] }
+reqwless = { version = "0.14.0", default-features = false }
+serde-json-core = "0.6.0"
+serde = { version = "1.0.228", default-features = false, features = ["derive"] }
 
 [build-dependencies]
 dotenvy = "0.15.7"
