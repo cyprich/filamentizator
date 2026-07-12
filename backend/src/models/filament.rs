@@ -81,7 +81,7 @@ pub struct FilamentJoin {
 }
 
 // this is being sent via api, similar to joined but with 'nested' material and vendor json
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct FilamentFull {
     pub id: i32,
     pub material: Material,

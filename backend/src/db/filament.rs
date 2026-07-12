@@ -3,7 +3,7 @@ use sqlx::{query_as, query_scalar};
 use crate::{
     db::{Builder, Pool},
     handlers::Pagination,
-    models::{Color, Filament, FilamentFull, FilamentJoin, FilamentNew, FilamentUpdate},
+    models::{Color, FilamentFull, FilamentJoin, FilamentNew, FilamentUpdate},
 };
 
 // TODO transactions

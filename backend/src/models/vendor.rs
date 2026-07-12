@@ -3,7 +3,7 @@ use sqlx::prelude::FromRow;
 
 use crate::utils::{self, MaxStringLengthTrait};
 
-#[derive(Serialize, Deserialize, FromRow)]
+#[derive(Serialize, Deserialize, FromRow, Debug)]
 pub struct Vendor {
     pub id: i32,
     pub name: String,

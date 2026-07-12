@@ -17,16 +17,16 @@ pub async fn get_filament_simple(
 
     match filaments {
         Ok(val) => {
-            let mut f = val
+            let mut filaments = val
                 .iter()
                 .map(FilamentSimple::from)
                 .collect::<Vec<FilamentSimple>>();
 
             if let Some(length) = max_string_length.max_string_length {
-                f.apply_max_string_length(length);
+                filaments.apply_max_string_length(length);
             }
 
-            handle_db_error(Ok(f))
+            handle_db_error(Ok(filaments))
         }
         Err(err) => handle_db_error(Err(err)),
     }

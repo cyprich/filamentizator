@@ -1,7 +1,7 @@
 use sqlx::query_as;
 
 use crate::{
-    db::{self, Builder, Pool},
+    db::{Builder, Pool},
     handlers::Pagination,
     models::{Color, ColorNew, ColorUpdate},
 };
