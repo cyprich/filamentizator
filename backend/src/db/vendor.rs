@@ -1,11 +1,24 @@
 use sqlx::query_as;
 
-use crate::{db::Pool, models::Vendor};
+use crate::{
+    db::{Builder, Pool},
+    handlers::Pagination,
+    models::Vendor,
+};
 
-pub async fn select_vendor(pool: &Pool) -> anyhow::Result<Vec<Vendor>> {
-    let vendors = query_as!(Vendor, "select * from vendor order by name")
-        .fetch_all(pool)
-        .await?;
+pub async fn select_vendor(pool: &Pool, pagination: Pagination) -> anyhow::Result<Vec<Vendor>> {
+    let mut builder = Builder::new("select * from vendor order by name");
+
+    if let Some(val) = pagination.limit {
+        builder.push(" limit ");
+        builder.push_bind(val);
+    }
+    if let Some(val) = pagination.offset {
+        builder.push(" offset ");
+        builder.push_bind(val);
+    }
+
+    let vendors = builder.build_query_as::<Vendor>().fetch_all(pool).await?;
 
     Ok(vendors)
 }

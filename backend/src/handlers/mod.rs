@@ -28,3 +28,9 @@ pub fn handle_db_error<T: serde::Serialize>(result: anyhow::Result<T>) -> impl R
 pub struct GeneralName {
     pub name: String,
 }
+
+#[derive(Deserialize)]
+pub struct Pagination {
+    pub limit: Option<i32>,
+    pub offset: Option<i32>,
+}

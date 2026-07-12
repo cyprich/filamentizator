@@ -2,27 +2,42 @@ use sqlx::{query_as, query_scalar};
 
 use crate::{
     db::{Builder, Pool},
-    models::{Color, FilamentFull, FilamentJoin, FilamentNew, FilamentUpdate},
+    handlers::Pagination,
+    models::{Color, Filament, FilamentFull, FilamentJoin, FilamentNew, FilamentUpdate},
 };
 
 // TODO transactions
 
-pub async fn select_filaments(pool: &Pool) -> anyhow::Result<Vec<FilamentFull>> {
+pub async fn select_filaments(
+    pool: &Pool,
+    pagination: Pagination,
+) -> anyhow::Result<Vec<FilamentFull>> {
     let mut tx = pool.begin().await?;
-
-    let filaments = query_as!(
-        FilamentJoin,
-        "select 
+    let mut builder = Builder::new(
+        "
+        select 
             f.*, 
             v.name as vendor_name ,
             m.name as material_name
         from filament f
         join vendor v on f.vendor_id = v.id 
         join material m on f.material_id = m.id 
-        order by f.date_created"
-    )
-    .fetch_all(&mut *tx)
-    .await?;
+        order by f.date_created",
+    );
+
+    if let Some(val) = pagination.limit {
+        builder.push(" limit ");
+        builder.push_bind(val);
+    };
+    if let Some(val) = pagination.offset {
+        builder.push(" offset ");
+        builder.push_bind(val);
+    }
+
+    let filaments = builder
+        .build_query_as::<FilamentJoin>()
+        .fetch_all(&mut *tx)
+        .await?;
 
     let mut result = vec![];
 
@@ -59,6 +74,15 @@ pub async fn select_filament_by_id(pool: &Pool, id: i32) -> anyhow::Result<Filam
     let colors = select_filament_colors(&mut *tx, id).await?;
 
     Ok(FilamentFull::new(filament, colors))
+}
+
+pub async fn select_filament_count(pool: &Pool) -> anyhow::Result<i64> {
+    let count = query_scalar!("select count(*) from filament")
+        .fetch_one(pool)
+        .await?
+        .unwrap_or(0);
+
+    Ok(count)
 }
 
 pub async fn insert_filament(pool: &Pool, filament: FilamentNew) -> anyhow::Result<FilamentFull> {
