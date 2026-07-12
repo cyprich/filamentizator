@@ -12,7 +12,7 @@ pub async fn get_filament(pool: web::Data<db::Pool>) -> impl Responder {
     handle_db_error(filaments)
 }
 
-#[get("/filament/{id}")]
+#[get("/filament/{id:\\d+}")]
 pub async fn get_filament_by_id(pool: web::Data<db::Pool>, id: web::Path<i32>) -> impl Responder {
     let filament = db::select_filament_by_id(&pool.into_inner(), id.into_inner()).await;
     handle_db_error(filament)

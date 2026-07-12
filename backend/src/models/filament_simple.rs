@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::models::{Filament, FilamentFull};
+use crate::models::FilamentFull;
 
 #[derive(Serialize, Deserialize)]
 pub struct FilamentSimple {
