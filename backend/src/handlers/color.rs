@@ -2,13 +2,16 @@ use actix_web::{Responder, delete, get, patch, post, web};
 
 use crate::{
     db,
-    handlers::handle_db_error,
+    handlers::{Pagination, handle_db_error},
     models::{ColorNew, ColorUpdate},
 };
 
 #[get("/color")]
-pub async fn get_color(pool: web::Data<db::Pool>) -> impl Responder {
-    let colors = db::select_colors(&pool.into_inner()).await;
+pub async fn get_color(
+    pool: web::Data<db::Pool>,
+    pagination: web::Query<Pagination>,
+) -> impl Responder {
+    let colors = db::select_colors(&pool.into_inner(), pagination.into_inner()).await;
     handle_db_error(colors)
 }
 

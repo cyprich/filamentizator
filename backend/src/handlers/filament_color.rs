@@ -2,13 +2,16 @@ use actix_web::{Responder, delete, get, patch, post, web};
 
 use crate::{
     db::{self, select_filament_color},
-    handlers::handle_db_error,
+    handlers::{Pagination, handle_db_error},
     models::{FilamentColorNew, FilamentColorUpdate},
 };
 
 #[get("/filament_color")]
-pub async fn get_filament_color(pool: web::Data<db::Pool>) -> impl Responder {
-    let result = select_filament_color(&pool.into_inner()).await;
+pub async fn get_filament_color(
+    pool: web::Data<db::Pool>,
+    pagination: web::Query<Pagination>,
+) -> impl Responder {
+    let result = select_filament_color(&pool.into_inner(), pagination.into_inner()).await;
     handle_db_error(result)
 }
 

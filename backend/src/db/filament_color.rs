@@ -2,16 +2,29 @@ use sqlx::query_as;
 
 use crate::{
     db::{Builder, Pool},
+    handlers::Pagination,
     models::{Color, FilamentColor, FilamentColorNew, FilamentColorUpdate},
 };
 
-pub async fn select_filament_color(pool: &Pool) -> anyhow::Result<Vec<FilamentColor>> {
-    let result = query_as!(
-        FilamentColor,
-        "select * from filament_color order by filament_id"
-    )
-    .fetch_all(pool)
-    .await?;
+pub async fn select_filament_color(
+    pool: &Pool,
+    pagination: Pagination,
+) -> anyhow::Result<Vec<FilamentColor>> {
+    let mut builder = Builder::new("select * from filament_color order by filament_id");
+
+    if let Some(val) = pagination.limit {
+        builder.push(" limit ");
+        builder.push_bind(val);
+    }
+    if let Some(val) = pagination.offset {
+        builder.push(" offset ");
+        builder.push_bind(val);
+    }
+
+    let result = builder
+        .build_query_as::<FilamentColor>()
+        .fetch_all(pool)
+        .await?;
 
     Ok(result)
 }
