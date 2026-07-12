@@ -2,16 +2,26 @@ use actix_web::{Responder, delete, get, patch, post, web};
 
 use crate::{
     db,
-    handlers::{Pagination, handle_db_error},
+    handlers::{MaxStringLength, Pagination, handle_db_error},
     models::{ColorNew, ColorUpdate},
+    utils::MaxStringLengthTrait,
 };
 
 #[get("/color")]
 pub async fn get_color(
     pool: web::Data<db::Pool>,
     pagination: web::Query<Pagination>,
+    max_string_length: web::Query<MaxStringLength>,
 ) -> impl Responder {
     let colors = db::select_colors(&pool.into_inner(), pagination.into_inner()).await;
+
+    if let Some(length) = max_string_length.max_string_length
+        && let Ok(mut colors) = colors
+    {
+        colors.apply_max_string_length(length);
+        return handle_db_error(Ok(colors));
+    }
+
     handle_db_error(colors)
 }
 

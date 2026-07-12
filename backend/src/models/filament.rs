@@ -1,11 +1,15 @@
 use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
 
-use crate::models::{Color, Material, Temp, Vendor, Weight};
+use crate::{
+    models::{Color, Material, Temp, Vendor, Weight},
+    utils::{self, MaxStringLengthTrait},
+};
 
 // represents table from database
 // it's not even being used, but i would like to keep it for completeness
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
+#[allow(dead_code)]
 pub struct Filament {
     pub id: i32,
     pub vendor_id: i32,
@@ -120,6 +124,25 @@ impl FilamentFull {
             price: f.price,
             date_created: f.date_created,
             date_updated: f.date_updated,
+        }
+    }
+}
+
+impl MaxStringLengthTrait for FilamentFull {
+    fn apply_max_string_length(&mut self, max_length: usize) {
+        let limit = utils::max_string_length;
+
+        self.name = limit(&self.name, max_length);
+        self.vendor.apply_max_string_length(max_length);
+        self.material.apply_max_string_length(max_length);
+        self.colors.apply_max_string_length(max_length);
+    }
+}
+
+impl MaxStringLengthTrait for Vec<FilamentFull> {
+    fn apply_max_string_length(&mut self, max_length: usize) {
+        for f in self {
+            f.apply_max_string_length(max_length);
         }
     }
 }

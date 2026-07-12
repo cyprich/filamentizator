@@ -2,16 +2,26 @@ use actix_web::{Responder, delete, get, patch, post, web};
 
 use crate::{
     db,
-    handlers::{Pagination, handle_db_error},
+    handlers::{MaxStringLength, Pagination, handle_db_error},
     models::{FilamentNew, FilamentUpdate},
+    utils::MaxStringLengthTrait,
 };
 
 #[get("/filament")]
 pub async fn get_filament(
     pool: web::Data<db::Pool>,
     pagination: web::Query<Pagination>,
+    max_string_length: web::Query<MaxStringLength>,
 ) -> impl Responder {
     let filaments = db::select_filaments(&pool.into_inner(), pagination.into_inner()).await;
+
+    if let Some(length) = max_string_length.max_string_length
+        && let Ok(mut filaments) = filaments
+    {
+        filaments.apply_max_string_length(length);
+        return handle_db_error(Ok(filaments));
+    }
+
     handle_db_error(filaments)
 }
 

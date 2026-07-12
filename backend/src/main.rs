@@ -7,6 +7,7 @@ use crate::handlers::*;
 mod db;
 mod handlers;
 mod models;
+pub(crate) mod utils;
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
