@@ -2,12 +2,15 @@ use actix_web::{Responder, delete, get, patch, post, web};
 
 use crate::{
     db,
-    handlers::{GeneralName, handle_db_error},
+    handlers::{GeneralName, Pagination, handle_db_error},
 };
 
 #[get("/vendor")]
-async fn get_vendor(pool: web::Data<db::Pool>) -> impl Responder {
-    let vendors = db::select_vendor(&pool.into_inner()).await;
+async fn get_vendor(
+    pool: web::Data<db::Pool>,
+    pagination: web::Query<Pagination>,
+) -> impl Responder {
+    let vendors = db::select_vendor(&pool.into_inner(), pagination.into_inner()).await;
     handle_db_error(vendors)
 }
 

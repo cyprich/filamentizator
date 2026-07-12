@@ -2,13 +2,16 @@ use actix_web::{Responder, delete, get, patch, post, web};
 
 use crate::{
     db,
-    handlers::handle_db_error,
+    handlers::{Pagination, handle_db_error},
     models::{FilamentNew, FilamentUpdate},
 };
 
 #[get("/filament")]
-pub async fn get_filament(pool: web::Data<db::Pool>) -> impl Responder {
-    let filaments = db::select_filaments(&pool.into_inner()).await;
+pub async fn get_filament(
+    pool: web::Data<db::Pool>,
+    pagination: web::Query<Pagination>,
+) -> impl Responder {
+    let filaments = db::select_filaments(&pool.into_inner(), pagination.into_inner()).await;
     handle_db_error(filaments)
 }
 
@@ -16,6 +19,12 @@ pub async fn get_filament(pool: web::Data<db::Pool>) -> impl Responder {
 pub async fn get_filament_by_id(pool: web::Data<db::Pool>, id: web::Path<i32>) -> impl Responder {
     let filament = db::select_filament_by_id(&pool.into_inner(), id.into_inner()).await;
     handle_db_error(filament)
+}
+
+#[get("/filament/count")]
+pub async fn get_filament_count(pool: web::Data<db::Pool>) -> impl Responder {
+    let count = db::select_filament_count(&pool.into_inner()).await;
+    handle_db_error(count)
 }
 
 #[post("/filament")]

@@ -1,11 +1,24 @@
 use sqlx::query_as;
 
-use crate::{db::Pool, models::Material};
+use crate::{
+    db::{Builder, Pool},
+    handlers::Pagination,
+    models::Material,
+};
 
-pub async fn select_material(pool: &Pool) -> anyhow::Result<Vec<Material>> {
-    let materials = query_as!(Material, "select * from material order by name")
-        .fetch_all(pool)
-        .await?;
+pub async fn select_material(pool: &Pool, pagination: Pagination) -> anyhow::Result<Vec<Material>> {
+    let mut builder = Builder::new("select * from material order by name");
+
+    if let Some(val) = pagination.limit {
+        builder.push(" limit ");
+        builder.push_bind(val);
+    }
+    if let Some(val) = pagination.offset {
+        builder.push(" offset ");
+        builder.push_bind(val);
+    }
+
+    let materials = builder.build_query_as::<Material>().fetch_all(pool).await?;
 
     Ok(materials)
 }
