@@ -13,8 +13,8 @@ use embedded_graphics::{
 use heapless::{String, Vec};
 
 use crate::{
-    CHEVRON_DOWN, CHEVRON_LEFT, CHEVRON_RIGHT, CHEVRON_UP, MAX_FILAMENT_COUNT, MAX_STRING_LENGTH,
-    models::Filament,
+    CHEVRON_DOWN, CHEVRON_LEFT, CHEVRON_RIGHT, CHEVRON_UP, Error, MAX_FILAMENT_COUNT,
+    MAX_STRING_LENGTH, models::Filament,
 };
 use crate::{display::Display, trunc_str};
 
@@ -26,7 +26,7 @@ pub enum Screen<'a> {
     Welcome(Option<&'a str>),
     Filaments(&'a Vec<Filament, MAX_FILAMENT_COUNT>, i32, i32),
     NavigationHelp,
-    Error(crate::Error, Option<&'a str>),
+    Error(&'a Error),
 }
 
 impl Screen<'_> {
@@ -37,7 +37,7 @@ impl Screen<'_> {
                 draw_filaments(display, f, *current_page, *max_page).await
             }
             Self::NavigationHelp => draw_navigation_help(display).await,
-            Screen::Error(e, hint) => draw_error(display, e, hint).await,
+            Screen::Error(e) => draw_error(display, e).await,
         }
     }
 }
@@ -311,7 +311,7 @@ async fn draw_navigation_help(display: &mut Display<'_>) {
     understand.draw(display).unwrap();
 }
 
-async fn draw_error(display: &mut Display<'_>, error: &crate::Error, hint: &Option<&str>) {
+async fn draw_error(display: &mut Display<'_>, error: &crate::Error) {
     let mut y = 0;
 
     let main = Text::with_text_style(
@@ -340,7 +340,7 @@ async fn draw_error(display: &mut Display<'_>, error: &crate::Error, hint: &Opti
     main.draw(display).unwrap();
     desc.draw(display).unwrap();
 
-    if let Some(val) = hint {
+    if let Some(val) = error.get_hint() {
         let mut hint = String::<64>::new();
         write!(&mut hint, "Hint:\n{}", val).unwrap();
 

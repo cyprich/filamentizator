@@ -38,6 +38,14 @@ impl Error {
 
         s
     }
+
+    pub fn get_hint(&self) -> Option<&str> {
+        match self {
+            Error::Reqwless(error) => Some("Unreachable backend?"),
+            Error::SerdeJson(error) => Some("Old backend version?"),
+            _ => None,
+        }
+    }
 }
 
 impl From<String<MAX_STRING_LENGTH>> for Error {

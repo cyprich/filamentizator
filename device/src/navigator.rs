@@ -1,14 +1,14 @@
-use core::result;
+use core::{panic, result};
 
 use embassy_time::Timer;
 use heapless::Vec;
+use log::error;
 
 use crate::{
-    MAX_FILAMENT_COUNT,
+    Error, MAX_FILAMENT_COUNT,
     button::ButtonEvent,
     client::ApiClient,
     display::Display,
-    handle_get_filaments_error,
     models::Filament,
     ui::{Screen, UI},
 };
@@ -23,6 +23,7 @@ pub struct Navigator<'a> {
     ui: UI<'a>,
     display: Display<'a>,
     api_client: ApiClient<'a>,
+    screen: Screen<'a>,
     filaments: Vec<Filament, MAX_FILAMENT_COUNT>,
     filaments_count: i32,
     current_page: i32,
@@ -40,7 +41,19 @@ impl Navigator<'_> {
     ) -> Self {
         // get filaments count
         let result = api_client.get_filaments_count().await;
-        let filaments_count = handle_get_filaments_error(result, &mut ui, &mut display).await;
+        let filaments_count = match result {
+            Ok(val) => val,
+            Err(e) => {
+                error!("{}", e);
+
+                let screen = Screen::Error(&e);
+                ui.screen = &screen;
+                ui.render(&mut display).await;
+
+                panic!();
+            }
+        };
+        let filaments_count = self.handle_api_error(result).await;
 
         // set these variables - for pagination
         let current_page = 1;
@@ -50,6 +63,7 @@ impl Navigator<'_> {
         }
 
         let filaments = Vec::new();
+        let screen = Screen::NavigationHelp;
 
         ui.switch_screen(&Screen::NavigationHelp);
         ui.render(&mut display).await;
@@ -58,6 +72,7 @@ impl Navigator<'_> {
             ui,
             display,
             api_client,
+            screen,
             filaments,
             filaments_count,
             current_page,
@@ -65,27 +80,26 @@ impl Navigator<'_> {
         }
     }
 
-    pub async fn handle_event(&'a mut self, event: ButtonEvent) {
-        let new_screen = match &self.ui.screen {
-            Screen::Filaments(vec_inner, _, _) => None,
+    pub async fn handle_event(&mut self, event: ButtonEvent) {
+        let something_changed = match &self.ui.screen {
+            Screen::Filaments(vec_inner, _, _) => false,
             Screen::NavigationHelp => {
                 if matches!(event, ButtonEvent::Right) {
                     self.update_filaments(SetFilamentPage::Current).await;
-                    let filaments = &self.filaments;
-                    let screen = Screen::Filaments(&filaments, self.current_page, self.max_page);
-                    Some(screen)
+                    self.screen =
+                        Screen::Filaments(&self.filaments, self.current_page, self.max_page);
+                    true
                 } else {
-                    None
+                    false
                 }
             }
-            _ => None,
+            _ => false,
         };
-        if new_screen.is_none() {
+        if !something_changed {
             return;
         }
 
-        let new_screen = new_screen.unwrap();
-        self.ui.switch_screen(&new_screen);
+        self.ui.switch_screen(&self.screen);
         self.ui.render(&mut self.display);
     }
 
@@ -109,6 +123,17 @@ impl Navigator<'_> {
         };
 
         let result = self.api_client.get_filaments(new_page).await;
-        self.filaments = handle_get_filaments_error(result, &mut self.ui, &mut self.display).await;
+        self.filaments = match result {
+            Ok(val) => val,
+            Err(e) => {
+                error!("{}", e);
+
+                self.screen = Screen::Error(&e);
+                self.ui.switch_screen(&self.screen);
+                self.ui.render(&mut self.display).await;
+
+                panic!();
+            }
+        };
     }
 }

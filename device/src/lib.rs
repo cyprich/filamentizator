@@ -71,31 +71,3 @@ pub fn trunc_str(
 
     result
 }
-
-pub async fn handle_get_filaments_error<T>(
-    result: Result<T, Error>,
-    ui: &mut UI<'_>,
-    display: &mut Display<'_>,
-) -> T
-where
-    T: for<'de> serde::Deserialize<'de>,
-{
-    let e = match result {
-        Ok(val) => {
-            return val;
-        }
-        Err(e) => e,
-    };
-
-    error!("{}", e);
-    let hint = match e {
-        Error::Reqwless(_) => Some("Unreachable backend?"),
-        Error::SerdeJson(_) => Some("Old backend version?"),
-        _ => None,
-    };
-    let screen = Screen::Error(e, hint);
-    ui.switch_screen(&screen);
-    ui.render(display).await;
-
-    panic!(); // TODO: what do i do here?
-}

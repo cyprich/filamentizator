@@ -19,6 +19,7 @@ pub struct Filament {
     pub weight_spool: i32,
     pub price: f32,
     pub colors: Vec<String<MAX_STRING_LENGTH>, MAX_COLOR_COUNT>,
+    // TODO: either fix or remove this
     // pub date_created: OffsetDateTime,
     // pub date_updated: OffsetDateTime,
 }
