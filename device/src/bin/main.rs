@@ -12,6 +12,8 @@ use device::{MAX_FILAMENT_COUNT, ui::Screen};
 use device::{client::ApiClient, display::Display, ui::UI, wifi};
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
+use esp_hal::delay::Delay;
+use esp_hal::gpio::{Input, InputConfig, Level, Pull};
 use esp_hal::{clock::CpuClock, timer::timg::TimerGroup};
 use log::{error, info};
 
@@ -123,6 +125,16 @@ async fn main(spawner: Spawner) -> ! {
     ui.switch_screen(Screen::Filaments(filaments, current_page, max_page));
     ui.render(&mut display).await;
 
+    let config = InputConfig::default().with_pull(Pull::Up);
+    let mut b1 = Input::new(peripherals.GPIO4, config.clone());
+    // let mut b2 = Input::new(peripherals.GPIO5, config.clone());
+    // let mut b3 = Input::new(peripherals.GPIO6, config.clone());
+    // let mut b4 = Input::new(peripherals.GPIO7, config.clone());
+    let mut delay = Delay::new();
+
+    print_when_pressed(&mut b1, &mut delay);
+
+    // done
     let mut i = 0;
     loop {
         info!("running: {}", i);
@@ -133,4 +145,16 @@ async fn main(spawner: Spawner) -> ! {
     // TODO: disconnect wifi
 
     // for inspiration have a look at the examples at https://github.com/esp-rs/esp-hal/tree/esp-hal-v1.1.0/examples
+}
+
+fn print_when_pressed(button: &mut Input<'_>, delay: &mut Delay) {
+    let mut was_pressed = false;
+    loop {
+        let is_pressed = button.is_low();
+        if is_pressed && !was_pressed {
+            info!("was pressed");
+        }
+        was_pressed = is_pressed;
+        delay.delay_millis(100);
+    }
 }
