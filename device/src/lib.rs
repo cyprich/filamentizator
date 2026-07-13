@@ -10,7 +10,7 @@ pub mod wifi;
 pub use error::Error;
 
 pub const MAX_STRING_LENGTH: usize = 64;
-pub const MAX_FILAMENT_COUNT: usize = 4;
+pub const MAX_FILAMENT_COUNT: usize = 3;
 pub const MAX_COLOR_COUNT: usize = 4;
 
 pub const WIFI_SSID: Option<&str> = option_env!("WIFI_SSID");

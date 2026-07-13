@@ -13,6 +13,15 @@ pub struct FilamentSimple {
     pub name: String,
     pub vendor_name: String,
     pub material_name: String,
+    pub temp_min: i32,
+    pub temp_max: Option<i32>,
+    pub temp_bed_min: i32,
+    pub temp_bed_max: Option<i32>,
+    pub weight_original: i32,
+    pub weight_net: i32,
+    pub weight_spool: i32,
+    pub price: f32,
+    pub colors: Vec<String>,
 }
 
 impl From<FilamentFull> for FilamentSimple {
@@ -22,6 +31,19 @@ impl From<FilamentFull> for FilamentSimple {
             name: value.name,
             vendor_name: value.vendor.name,
             material_name: value.material.name,
+            temp_min: value.temp.min,
+            temp_max: value.temp.max,
+            temp_bed_min: value.temp.bed_min,
+            temp_bed_max: value.temp.bed_max,
+            weight_original: value.weight.original,
+            weight_net: value.weight.net,
+            weight_spool: value.weight.spool,
+            price: value.price,
+            colors: value
+                .colors
+                .into_iter()
+                .map(|c| c.name.unwrap_or(c.hex))
+                .collect(),
         }
     }
 }
@@ -33,6 +55,19 @@ impl From<&FilamentFull> for FilamentSimple {
             name: value.name.clone(),
             vendor_name: value.vendor.name.clone(),
             material_name: value.material.name.clone(),
+            temp_min: value.temp.min,
+            temp_max: value.temp.max,
+            temp_bed_min: value.temp.bed_min,
+            temp_bed_max: value.temp.bed_max,
+            weight_original: value.weight.original,
+            weight_net: value.weight.net,
+            weight_spool: value.weight.spool,
+            price: value.price,
+            colors: value
+                .colors
+                .iter()
+                .map(|c| c.name.clone().unwrap_or(c.hex.clone()))
+                .collect(),
         }
     }
 }

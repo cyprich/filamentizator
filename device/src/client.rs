@@ -5,6 +5,7 @@ use embassy_net::{
     tcp::client::{TcpClient, TcpClientState},
 };
 use heapless::{String, Vec};
+use log::info;
 use reqwless::{client::HttpClient, request::Method};
 
 use crate::{
@@ -55,14 +56,19 @@ impl<'a> ApiClient<'a> {
         Ok(result)
     }
 
-    pub async fn get_filaments(&self) -> Result<Vec<Filament, MAX_FILAMENT_COUNT>, Error> {
+    pub async fn get_filaments(
+        &self,
+        page: usize,
+    ) -> Result<Vec<Filament, MAX_FILAMENT_COUNT>, Error> {
+        let offset = page * MAX_FILAMENT_COUNT - MAX_FILAMENT_COUNT;
         let mut endpoint = String::<256>::new();
         write!(
             &mut endpoint,
-            "/filament?max_filament_count={}&max_color_count={}&max_string_length={}",
-            MAX_FILAMENT_COUNT, MAX_COLOR_COUNT, MAX_STRING_LENGTH
+            "/filament/simple?limit={}&offset={}&max_color_count={}&max_string_length={}",
+            MAX_FILAMENT_COUNT, offset, MAX_COLOR_COUNT, MAX_STRING_LENGTH
         )?;
 
+        info!("{}", endpoint);
         let filaments = self.general_request(Method::GET, &endpoint).await?;
 
         Ok(filaments)

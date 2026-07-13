@@ -74,33 +74,45 @@ async fn main(spawner: Spawner) -> ! {
     let stack = wifi::init(peripherals.WIFI, spawner).await;
     let api = ApiClient::new(stack);
 
+    // get filaments count
+    let filament_count = match api.get_filaments_count().await {
+        Ok(val) => val,
+        Err(e) => {
+            error!("{}", &e);
+            let hint = match e {
+                device::Error::Reqwless(_) => Some("Unreachable backend?"),
+                _ => None,
+            };
+            ui.switch_screen(Screen::Error(e, hint));
+            ui.render(&mut display).await;
+            panic!() // TODO: handle this
+        }
+    };
+    // show filaments screen
+    let mut current_page = 1;
+    let mut max_page = filament_count / MAX_FILAMENT_COUNT;
+    if filament_count % MAX_FILAMENT_COUNT != 0 {
+        max_page += 1;
+    }
+
     // get filamets
     ui.switch_screen(Screen::Welcome(Some("Getting Filaments")));
     ui.render(&mut display).await;
-    let filaments = match api.get_filaments().await {
+    let filaments = match api.get_filaments(current_page).await {
         Ok(val) => val,
         Err(e) => {
-            error!("{:?}", &e);
-            ui.switch_screen(Screen::Error(e, Some("Unreachable backend?")));
+            error!("{}", &e);
+            let hint = match e {
+                device::Error::Reqwless(_) => Some("Unreachable backend?"),
+                device::Error::SerdeJson(_) => Some("ani srnka netusi"),
+                _ => None,
+            };
+            ui.switch_screen(Screen::Error(e, hint));
             ui.render(&mut display).await;
             panic!() // TODO: handle this
         }
     };
 
-    // get filaments count
-    let count = match api.get_filaments_count().await {
-        Ok(val) => val,
-        Err(e) => {
-            error!("{:?}", &e);
-            ui.switch_screen(Screen::Error(e, Some("Unreachable backend?")));
-            ui.render(&mut display).await;
-            panic!() // TODO: handle this
-        }
-    };
-    let mut current_page = 1;
-    let max_page = count / MAX_FILAMENT_COUNT + 1;
-
-    // show filaments screen
     ui.switch_screen(Screen::Filaments(filaments, current_page, max_page));
 
     info!("running");

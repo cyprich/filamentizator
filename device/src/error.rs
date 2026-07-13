@@ -1,4 +1,4 @@
-use core::fmt::Write;
+use core::fmt::{Display, Write};
 use heapless::String;
 
 use super::MAX_STRING_LENGTH;
@@ -61,5 +61,11 @@ impl From<serde_json_core::de::Error> for Error {
 impl From<core::fmt::Error> for Error {
     fn from(value: core::fmt::Error) -> Self {
         Self::Format(value)
+    }
+}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}: {}", self.get_type(), self.get_description())
     }
 }

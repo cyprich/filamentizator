@@ -3,53 +3,22 @@ use super::MAX_STRING_LENGTH;
 use heapless::{String, Vec};
 use serde::Deserialize;
 use serde::Serialize;
-// use time::OffsetDateTime;
-
-#[derive(Default, Debug, Serialize, Deserialize)]
-pub struct Vendor {
-    id: i32,
-    name: String<MAX_STRING_LENGTH>,
-}
-
-#[derive(Default, Debug, Serialize, Deserialize)]
-pub struct Material {
-    id: i32,
-    name: String<MAX_STRING_LENGTH>,
-}
-
-#[derive(Default, Debug, Serialize, Deserialize)]
-pub struct Temp {
-    pub min: i32,
-    pub max: Option<i32>,
-    pub bed_min: i32,
-    pub bed_max: Option<i32>,
-}
-
-#[derive(Default, Debug, Serialize, Deserialize)]
-pub struct Weight {
-    pub original: i32,
-    pub net: i32,
-    pub spool: i32,
-}
-
-#[derive(Default, Debug, Serialize, Deserialize)]
-pub struct Color {
-    pub id: i32,
-    pub name: Option<String<MAX_STRING_LENGTH>>,
-    // WARN: hex value without the `#` character
-    pub hex: String<6>,
-}
 
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Filament {
     pub id: i32,
     pub name: String<MAX_STRING_LENGTH>,
-    pub material: Material,
-    pub vendor: Vendor,
-    pub temp: Temp,
-    pub weight: Weight,
+    pub material_name: String<MAX_STRING_LENGTH>,
+    pub vendor_name: String<MAX_STRING_LENGTH>,
+    pub temp_min: i32,
+    pub temp_max: Option<i32>,
+    pub temp_bed_min: i32,
+    pub temp_bed_max: Option<i32>,
+    pub weight_original: i32,
+    pub weight_net: i32,
+    pub weight_spool: i32,
     pub price: f32,
-    pub colors: Vec<Color, MAX_COLOR_COUNT>,
+    pub colors: Vec<String<MAX_STRING_LENGTH>, MAX_COLOR_COUNT>,
     // pub date_created: OffsetDateTime,
     // pub date_updated: OffsetDateTime,
 }

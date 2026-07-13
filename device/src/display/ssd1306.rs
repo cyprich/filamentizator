@@ -82,23 +82,6 @@ impl DrawTarget for Display<'_> {
             .draw_iter(pixels)
             .map_err(|_| crate::Error::SsdDisplayError)
     }
-
-    // fn draw_iter<I>(&mut self, pixels: I) -> Result<(), Self::Error>
-    // where
-    //     I: IntoIterator<Item = embedded_graphics::Pixel<Self::Color>>,
-    // {
-    //     for Pixel(coord, color) in pixels.into_iter() {
-    //         let x = coord.x;
-    //         let y = coord.y;
-    //
-    //         if x >= 0 && x < 128 && y >= 0 && y < 64 {
-    //             let index = (y * 128 + x) as usize;
-    //             self.framebuffer[index] = color.is_on() as u8;
-    //         }
-    //     }
-    //
-    //     Ok(())
-    // }
 }
 
 impl OriginDimensions for Display<'_> {

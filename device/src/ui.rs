@@ -6,12 +6,13 @@ use embedded_graphics::{
     },
     pixelcolor::BinaryColor,
     prelude::*,
+    primitives::{Line, PrimitiveStyle, PrimitiveStyleBuilder, Rectangle},
     text::{Alignment, Baseline, Text, TextStyleBuilder},
 };
-use heapless::Vec;
+use heapless::{String, Vec};
 
-use crate::display::Display;
-use crate::{MAX_FILAMENT_COUNT, models::Filament};
+use crate::{MAX_FILAMENT_COUNT, MAX_STRING_LENGTH, models::Filament};
+use crate::{display::Display, trunc_str};
 
 use core::fmt::Write;
 use log::info;
@@ -162,19 +163,10 @@ async fn draw_filaments(
 ) {
     let mut y = 0;
 
-    let title = Text::with_text_style(
-        "Filaments",
-        Point::new(0, y),
-        Font::Description.get(),
-        TextStyleBuilder::new()
-            .alignment(Alignment::Left)
-            .baseline(Baseline::Top)
-            .build(),
-    );
-
-    let mut page = heapless::String::<16>::new();
+    // page number
+    let mut page = String::<16>::new();
     write!(&mut page, "Page {}/{}", current_page, max_page).unwrap();
-    info!("PAGE: {}", page);
+    let page_text_width = page.chars().count() as i32 * (Font::Description.width());
     let page = Text::with_text_style(
         &page,
         Point::new(128, 0),
@@ -185,10 +177,53 @@ async fn draw_filaments(
             .build(),
     );
 
-    y += Font::Description.height();
+    // border around page
+    let page_rect_style = PrimitiveStyleBuilder::new()
+        .stroke_color(BinaryColor::On)
+        .stroke_width(1)
+        .fill_color(BinaryColor::Off)
+        .build();
+    const PAD: usize = 2; // padding
+    let page_rect = Rectangle::new(
+        Point::new(128 - page_text_width - PAD as i32 - 1, -(PAD as i32)),
+        Size::new(
+            page_text_width as u32 + PAD as u32 * 2,
+            Font::Description.height() as u32 + PAD as u32 * 2,
+        ),
+    )
+    .into_styled(page_rect_style);
 
-    title.draw(display).unwrap();
+    // render each filament
+    for f in filaments {
+        let name = Text::with_baseline(&f.name, Point::new(0, y), Font::Text.get(), Baseline::Top);
+        y += Font::Text.height();
+
+        const LEN: usize = MAX_STRING_LENGTH * 2;
+        let mut desc = String::<LEN>::new();
+        write!(&mut desc, "{} - {}", f.vendor_name, f.material_name).unwrap();
+        if let Some(color) = f.colors.first() {
+            write!(&mut desc, " - {}", color).unwrap();
+        }
+
+        let desc = trunc_str(&desc, (120 / Font::Description.width()) as usize, 1);
+
+        let desc = Text::with_baseline(
+            &desc,
+            Point::new(0, y),
+            Font::Description.get(),
+            Baseline::Top,
+        );
+        y += Font::Description.height();
+        y += 3;
+
+        name.draw(display).unwrap();
+        desc.draw(display).unwrap();
+    }
+
+    page_rect.draw(display).unwrap();
     page.draw(display).unwrap();
+    // page_line_horizontal.draw(display).unwrap();
+    // page_line_vertical.draw(display).unwrap();
 }
 
 async fn draw_error(display: &mut Display<'_>, error: &crate::Error, hint: &Option<&str>) {
@@ -206,7 +241,7 @@ async fn draw_error(display: &mut Display<'_>, error: &crate::Error, hint: &Opti
     y += Font::Heading.height();
 
     let desc = error.get_description();
-    let desc = crate::trunc_str(&desc, (128 / Font::Text.width()) as usize, 2);
+    let desc = crate::trunc_str(&desc, (128 / Font::Text.width()) as usize, 3);
     let desc = Text::with_text_style(
         &desc,
         Point::new(64, y),
@@ -221,7 +256,7 @@ async fn draw_error(display: &mut Display<'_>, error: &crate::Error, hint: &Opti
     desc.draw(display).unwrap();
 
     if let Some(val) = hint {
-        let mut hint = heapless::String::<64>::new();
+        let mut hint = String::<64>::new();
         write!(&mut hint, "Hint:\n{}", val).unwrap();
 
         let hint = Text::with_text_style(
