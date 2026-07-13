@@ -1,5 +1,6 @@
 use embedded_graphics::{
     Drawable,
+    image::{Image, ImageRaw},
     mono_font::{
         MonoTextStyle, MonoTextStyleBuilder,
         ascii::{FONT_5X7, FONT_6X12, FONT_8X13},
@@ -11,7 +12,10 @@ use embedded_graphics::{
 };
 use heapless::{String, Vec};
 
-use crate::{MAX_FILAMENT_COUNT, MAX_STRING_LENGTH, models::Filament};
+use crate::{
+    CHEVRON_DOWN, CHEVRON_LEFT, CHEVRON_RIGHT, CHEVRON_UP, MAX_FILAMENT_COUNT, MAX_STRING_LENGTH,
+    models::Filament,
+};
 use crate::{display::Display, trunc_str};
 
 use core::fmt::Write;
@@ -21,6 +25,7 @@ use log::info;
 pub enum Screen<'a> {
     Welcome(Option<&'a str>),
     Filaments(Vec<Filament, MAX_FILAMENT_COUNT>, usize, usize),
+    NavigationHelp,
     Error(crate::Error, Option<&'a str>),
 }
 
@@ -31,6 +36,7 @@ impl Screen<'_> {
             Screen::Filaments(f, current_page, max_page) => {
                 draw_filaments(display, f, *current_page, *max_page).await
             }
+            Self::NavigationHelp => draw_navigation_help(display).await,
             Screen::Error(e, hint) => draw_error(display, e, hint).await,
         }
     }
@@ -224,6 +230,85 @@ async fn draw_filaments(
     page.draw(display).unwrap();
     // page_line_horizontal.draw(display).unwrap();
     // page_line_vertical.draw(display).unwrap();
+}
+
+async fn draw_navigation_help(display: &mut Display<'_>) {
+    let mut y = 0;
+    const TEXT_ML: i32 = 16; // text margin left 
+    const IMG_MT: i32 = 2; // image margin top
+    const GAP_Y: i32 = 8;
+
+    let title = Text::with_text_style(
+        "Navigation",
+        Point::new(64, y),
+        Font::Text.get(),
+        TextStyleBuilder::new()
+            .alignment(Alignment::Center)
+            .baseline(Baseline::Top)
+            .build(),
+    );
+
+    y += Font::Text.height();
+
+    let chevron_right = ImageRaw::<BinaryColor>::new(CHEVRON_RIGHT, 8);
+    let chevron_right = Image::new(&chevron_right, Point::new(0, y + IMG_MT));
+    let chevron_right_text = Text::with_baseline(
+        "Confirm / Select",
+        Point::new(TEXT_ML, y),
+        Font::Text.get(),
+        Baseline::Top,
+    );
+    y += GAP_Y;
+
+    let chevron_up = ImageRaw::<BinaryColor>::new(CHEVRON_UP, 8);
+    let chevron_up = Image::new(&chevron_up, Point::new(0, y + IMG_MT));
+    let chevron_up_text = Text::with_baseline(
+        "Previous Item",
+        Point::new(TEXT_ML, y),
+        Font::Text.get(),
+        Baseline::Top,
+    );
+    y += GAP_Y;
+
+    let chevron_down = ImageRaw::<BinaryColor>::new(CHEVRON_DOWN, 8);
+    let chevron_down = Image::new(&chevron_down, Point::new(0, y + IMG_MT));
+    let chevron_down_text = Text::with_baseline(
+        "Next Item",
+        Point::new(TEXT_ML, y),
+        Font::Text.get(),
+        Baseline::Top,
+    );
+    y += GAP_Y;
+
+    let chevron_left = ImageRaw::<BinaryColor>::new(CHEVRON_LEFT, 8);
+    let chevron_left = Image::new(&chevron_left, Point::new(0, y + IMG_MT));
+    let chevron_left_text = Text::with_baseline(
+        "Cancel / Go Back",
+        Point::new(TEXT_ML, y),
+        Font::Text.get(),
+        Baseline::Top,
+    );
+
+    let understand = Text::with_baseline(
+        "Press Confirm to Continue",
+        Point::new(0, 64 - Font::Description.height()),
+        Font::Description.get(),
+        Baseline::Bottom,
+    );
+
+    title.draw(display).unwrap();
+
+    chevron_right.draw(display).unwrap();
+    chevron_up.draw(display).unwrap();
+    chevron_down.draw(display).unwrap();
+    chevron_left.draw(display).unwrap();
+
+    chevron_right_text.draw(display).unwrap();
+    chevron_up_text.draw(display).unwrap();
+    chevron_down_text.draw(display).unwrap();
+    chevron_left_text.draw(display).unwrap();
+
+    understand.draw(display).unwrap();
 }
 
 async fn draw_error(display: &mut Display<'_>, error: &crate::Error, hint: &Option<&str>) {

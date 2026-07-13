@@ -88,7 +88,8 @@ async fn main(spawner: Spawner) -> ! {
             panic!() // TODO: handle this
         }
     };
-    // show filaments screen
+
+    // variables for filament screen
     let mut current_page = 1;
     let mut max_page = filament_count / MAX_FILAMENT_COUNT;
     if filament_count % MAX_FILAMENT_COUNT != 0 {
@@ -113,16 +114,20 @@ async fn main(spawner: Spawner) -> ! {
         }
     };
 
+    // TODO: temp show help
+    ui.switch_screen(Screen::NavigationHelp);
+    ui.render(&mut display).await;
+    Timer::after(Duration::from_secs(10)).await;
+
+    // render filaments
     ui.switch_screen(Screen::Filaments(filaments, current_page, max_page));
+    ui.render(&mut display).await;
 
-    info!("running");
-
+    let mut i = 0;
     loop {
-        display.clear().await;
-        ui.draw(&mut display).await;
-        display.flush().await;
-
-        Timer::after(Duration::from_secs(2)).await;
+        info!("running: {}", i);
+        i += 1;
+        Timer::after(Duration::from_secs(5)).await;
     }
 
     // TODO: disconnect wifi

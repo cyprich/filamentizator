@@ -3,11 +3,13 @@
 pub mod client;
 pub mod display;
 pub mod error;
+pub mod images;
 pub mod models;
 pub mod ui;
 pub mod wifi;
 
 pub use error::Error;
+pub use images::*;
 
 pub const MAX_STRING_LENGTH: usize = 64;
 pub const MAX_FILAMENT_COUNT: usize = 3;

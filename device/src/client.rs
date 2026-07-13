@@ -68,7 +68,6 @@ impl<'a> ApiClient<'a> {
             MAX_FILAMENT_COUNT, offset, MAX_COLOR_COUNT, MAX_STRING_LENGTH
         )?;
 
-        info!("{}", endpoint);
         let filaments = self.general_request(Method::GET, &endpoint).await?;
 
         Ok(filaments)
