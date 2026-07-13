@@ -1,16 +1,11 @@
 use core::panic;
 
-use embassy_time::Timer;
 use heapless::Vec;
 use log::error;
 
 use crate::{
-    Error, MAX_FILAMENT_COUNT,
-    api_client::ApiClient,
-    button::ButtonEvent,
-    display::{self, Display},
-    models::Filament,
-    ui::Screen,
+    MAX_FILAMENT_COUNT, api_client::ApiClient, button::ButtonEvent, display::Display,
+    models::Filament, ui::Screen,
 };
 
 enum SetFilamentPage {
@@ -26,9 +21,11 @@ pub struct Navigator<'a> {
     screen: Screen<'a>,
 
     // pagination stuff
-    filaments_count: i32,
     current_page: i32,
     max_page: i32,
+
+    // quitting program
+    should_exit: bool,
 }
 
 impl Navigator<'_> {
@@ -61,15 +58,16 @@ impl Navigator<'_> {
             display,
             api_client,
             screen,
-            filaments_count,
             current_page,
             max_page,
+            should_exit: false,
         }
     }
 
     pub async fn handle_event(&mut self, event: &ButtonEvent) {
         let new_screen = match &self.screen {
-            Screen::Filaments(vec_inner, _, _) => None,
+            // TODO: all screens
+            Screen::Filaments(_vec_inner, _, _) => None,
             Screen::NavigationHelp => {
                 if matches!(event, ButtonEvent::Right) {
                     let filaments = self.update_filaments(SetFilamentPage::Current).await;
@@ -120,5 +118,9 @@ impl Navigator<'_> {
                 panic!();
             }
         }
+    }
+
+    pub fn should_exit(&self) -> bool {
+        self.should_exit
     }
 }

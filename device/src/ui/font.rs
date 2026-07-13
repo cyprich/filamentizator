@@ -1,22 +1,12 @@
 use embedded_graphics::{
-    Drawable,
-    image::{Image, ImageRaw},
     mono_font::{
         MonoTextStyle, MonoTextStyleBuilder,
         ascii::{FONT_5X7, FONT_6X12, FONT_8X13},
     },
     pixelcolor::BinaryColor,
-    prelude::*,
-    primitives::{Line, PrimitiveStyle, PrimitiveStyleBuilder, Rectangle},
-    text::{Alignment, Baseline, Text, TextStyleBuilder},
 };
-use heapless::{String, Vec};
 
-use crate::{Error, MAX_FILAMENT_COUNT, MAX_STRING_LENGTH, models::Filament};
-use crate::{display::Display, trunc_str};
 
-use core::fmt::Write;
-use log::info;
 
 pub enum Font {
     Heading,

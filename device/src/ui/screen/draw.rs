@@ -1,10 +1,6 @@
 use embedded_graphics::{
     Drawable,
     image::{Image, ImageRaw},
-    mono_font::{
-        MonoTextStyle, MonoTextStyleBuilder,
-        ascii::{FONT_5X7, FONT_6X12, FONT_8X13},
-    },
     pixelcolor::BinaryColor,
     prelude::*,
     primitives::{Line, PrimitiveStyle, PrimitiveStyleBuilder, Rectangle},
@@ -13,17 +9,16 @@ use embedded_graphics::{
 use heapless::{String, Vec};
 
 use crate::{
-    Error, MAX_FILAMENT_COUNT, MAX_STRING_LENGTH,
+    MAX_FILAMENT_COUNT, MAX_STRING_LENGTH,
     display::Display,
     models::Filament,
     trunc_str,
-    ui::{CHEVRON_DOWN, CHEVRON_LEFT, CHEVRON_RIGHT, CHEVRON_UP, Font},
+    ui::{CHEVRON_DOWN, CHEVRON_LEFT, CHEVRON_RIGHT, CHEVRON_UP, FAVICON, Font},
 };
 
 use core::fmt::Write;
-use log::info;
 
-pub(super) async fn draw_welcome(display: &mut Display<'_>, message: &Option<&str>) {
+pub(super) async fn draw_welcome(display: &mut Display<'_>) {
     let mut y = 0;
 
     let welcome = Text::with_text_style(
@@ -48,22 +43,13 @@ pub(super) async fn draw_welcome(display: &mut Display<'_>, message: &Option<&st
             .build(),
     );
 
+    const IMGSIZE: u32 = 16;
+    let img = ImageRaw::<BinaryColor>::new(FAVICON, IMGSIZE);
+    let img = Image::with_center(&img, Point::new(64, 64 - IMGSIZE as i32 / 2));
+
     welcome.draw(display).unwrap();
     fila.draw(display).unwrap();
-
-    if let Some(val) = message {
-        let message = Text::with_text_style(
-            val,
-            Point::new(64, 64),
-            Font::Description.get(),
-            TextStyleBuilder::new()
-                .alignment(Alignment::Center)
-                .baseline(Baseline::Bottom)
-                .build(),
-        );
-
-        message.draw(display).unwrap();
-    }
+    img.draw(display).unwrap();
 }
 
 pub(super) async fn draw_filaments(
@@ -138,10 +124,12 @@ pub(super) async fn draw_filaments(
 }
 
 pub(super) async fn draw_navigation_help(display: &mut Display<'_>) {
+    // fine-tuned values to make it look good
+    const TEXT_ML: i32 = 12; // text margin left 
+    const IMG_MT: i32 = 3; // image margin top
+    const GAP_Y: i32 = 9;
+
     let mut y = 0;
-    const TEXT_ML: i32 = 16; // text margin left 
-    const IMG_MT: i32 = 2; // image margin top
-    const GAP_Y: i32 = 8;
 
     let title = Text::with_text_style(
         "Navigation",
@@ -194,11 +182,14 @@ pub(super) async fn draw_navigation_help(display: &mut Display<'_>) {
         Baseline::Top,
     );
 
-    let understand = Text::with_baseline(
-        "Press Confirm to Start",
-        Point::new(0, 64 - Font::Description.height()),
+    let y = 64 - Font::Description.height();
+    let line = Line::new(Point::new(0, y - 3), Point::new(128, y - 3))
+        .into_styled(PrimitiveStyle::with_stroke(BinaryColor::On, 1));
+    let action = Text::with_baseline(
+        "< Exit | Start >",
+        Point::new(0, y),
         Font::Description.get(),
-        Baseline::Bottom,
+        Baseline::Top,
     );
 
     title.draw(display).unwrap();
@@ -213,7 +204,44 @@ pub(super) async fn draw_navigation_help(display: &mut Display<'_>) {
     chevron_down_text.draw(display).unwrap();
     chevron_left_text.draw(display).unwrap();
 
-    understand.draw(display).unwrap();
+    line.draw(display).unwrap();
+    action.draw(display).unwrap();
+}
+
+pub(super) async fn draw_info(display: &mut Display<'_>, info: &str) {
+    let mut y = 0;
+
+    let header = Text::with_text_style(
+        "Filamentizator",
+        Point::new(64, y),
+        Font::Description.get(),
+        TextStyleBuilder::new()
+            .alignment(Alignment::Center)
+            .baseline(Baseline::Top)
+            .build(),
+    );
+
+    y += Font::Description.height() + 2;
+
+    // let info = trunc_str(info, 3, 3);
+    let info = trunc_str(info, 128 / Font::Text.width() as usize, 3);
+    let text = Text::with_text_style(
+        &info,
+        Point::new(64, y),
+        Font::Text.get(),
+        TextStyleBuilder::new()
+            .alignment(Alignment::Center)
+            .baseline(Baseline::Top)
+            .build(),
+    );
+
+    const IMGSIZE: u32 = 16;
+    let img = ImageRaw::<BinaryColor>::new(FAVICON, IMGSIZE);
+    let img = Image::with_center(&img, Point::new(64, 64 - IMGSIZE as i32 / 2));
+
+    header.draw(display).unwrap();
+    text.draw(display).unwrap();
+    img.draw(display).unwrap();
 }
 
 pub(super) async fn draw_error(display: &mut Display<'_>, error: &crate::Error) {

@@ -9,13 +9,12 @@
 
 use device::button::{BUTTON_EVENTS, ButtonEvent, button_task};
 use device::navigator::Navigator;
-use device::{MAX_FILAMENT_COUNT, ui::Screen};
+use device::ui::Screen;
 #[allow(unused_imports)]
 use device::{api_client::ApiClient, display::Display, wifi};
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
-use esp_hal::delay::Delay;
-use esp_hal::gpio::{Input, InputConfig, Level, Pull};
+use esp_hal::gpio::{Input, InputConfig, Pull};
 use esp_hal::{clock::CpuClock, timer::timg::TimerGroup};
 use log::{error, info};
 
@@ -80,12 +79,12 @@ async fn main(spawner: Spawner) -> ! {
     display.flush().await;
 
     // init ui and show welcome screen
-    Screen::Welcome(None).render(&mut display).await;
-    Timer::after(Duration::from_secs(1)).await;
+    Screen::Welcome.render(&mut display).await;
+    Timer::after(Duration::from_secs(3)).await;
 
     // init wifi and api client
 
-    Screen::Welcome(Some("Initializing WiFi..."))
+    Screen::Info("Initializing WiFi...")
         .render(&mut display)
         .await;
     let stack = wifi::init(peripherals.WIFI, spawner).await;
@@ -96,8 +95,12 @@ async fn main(spawner: Spawner) -> ! {
 
     loop {
         let event = BUTTON_EVENTS.receive().await;
-        navigator.handle_event(&event).await;
         info!("event: {:?}", event);
+        navigator.handle_event(&event).await;
+
+        if navigator.should_exit() {
+            loop {}
+        }
     }
 
     // TODO: disconnect wifi

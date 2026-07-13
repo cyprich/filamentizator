@@ -1,43 +1,33 @@
-use embedded_graphics::{
-    Drawable,
-    image::{Image, ImageRaw},
-    mono_font::{
-        MonoTextStyle, MonoTextStyleBuilder,
-        ascii::{FONT_5X7, FONT_6X12, FONT_8X13},
-    },
-    pixelcolor::BinaryColor,
-    prelude::*,
-    primitives::{Line, PrimitiveStyle, PrimitiveStyleBuilder, Rectangle},
-    text::{Alignment, Baseline, Text, TextStyleBuilder},
-};
-use heapless::{String, Vec};
+use embedded_graphics::{Drawable, prelude::*};
+use heapless::Vec;
 
-use crate::{Error, MAX_FILAMENT_COUNT, MAX_STRING_LENGTH, models::Filament};
-use crate::{display::Display, trunc_str};
+use crate::display::Display;
+use crate::{Error, MAX_FILAMENT_COUNT, models::Filament};
 
-use core::fmt::{Pointer, Write};
-use log::info;
+use core::fmt::Write;
 
 mod draw;
 use draw::*;
 
 #[derive(Debug)]
 pub enum Screen<'a> {
-    Welcome(Option<&'a str>),
+    Welcome,
     Filaments(Vec<Filament, MAX_FILAMENT_COUNT>, i32, i32),
     NavigationHelp,
+    Info(&'a str),
     Error(&'a Error),
 }
 
 impl Screen<'_> {
     pub async fn draw(&self, display: &mut Display<'_>) {
         match self {
-            Screen::Welcome(message) => draw_welcome(display, &message.as_deref()).await,
+            Screen::Welcome => draw_welcome(display).await,
             Screen::Filaments(f, current_page, max_page) => {
                 draw_filaments(display, f, *current_page, *max_page).await
             }
             Self::NavigationHelp => draw_navigation_help(display).await,
-            Screen::Error(e) => draw_error(display, e).await,
+            Screen::Info(info) => draw_info(display, info).await,
+            Screen::Error(error) => draw_error(display, error).await,
         }
     }
 

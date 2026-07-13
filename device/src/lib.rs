@@ -11,10 +11,6 @@ pub mod wifi;
 
 pub use error::Error;
 
-use crate::models::Filament;
-use heapless::Vec;
-use log::error;
-
 pub const MAX_STRING_LENGTH: usize = 64;
 pub const MAX_FILAMENT_COUNT: usize = 3;
 pub const MAX_COLOR_COUNT: usize = 4;
@@ -35,7 +31,7 @@ macro_rules! mk_static {
 
 pub fn trunc_str(
     val: &str,
-    max_line_length: usize,
+    max_line_length_chars: usize,
     max_line_count: usize,
 ) -> heapless::String<256> {
     let mut x = 0; // current character number
@@ -45,7 +41,7 @@ pub fn trunc_str(
 
     for c in val.chars() {
         // end of line
-        if x >= max_line_length {
+        if x >= max_line_length_chars {
             // if we have any more lines
             if y < max_line_count {
                 result.push('\n').ok();
