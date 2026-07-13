@@ -13,112 +13,17 @@ use embedded_graphics::{
 use heapless::{String, Vec};
 
 use crate::{
-    CHEVRON_DOWN, CHEVRON_LEFT, CHEVRON_RIGHT, CHEVRON_UP, Error, MAX_FILAMENT_COUNT,
-    MAX_STRING_LENGTH, models::Filament,
+    Error, MAX_FILAMENT_COUNT, MAX_STRING_LENGTH,
+    display::Display,
+    models::Filament,
+    trunc_str,
+    ui::{CHEVRON_DOWN, CHEVRON_LEFT, CHEVRON_RIGHT, CHEVRON_UP, Font},
 };
-use crate::{display::Display, trunc_str};
 
 use core::fmt::Write;
 use log::info;
 
-#[derive(Debug)]
-pub enum Screen<'a> {
-    Welcome(Option<&'a str>),
-    Filaments(&'a Vec<Filament, MAX_FILAMENT_COUNT>, i32, i32),
-    NavigationHelp,
-    Error(&'a Error),
-}
-
-impl Screen<'_> {
-    pub async fn draw(&self, display: &mut Display<'_>) {
-        match self {
-            Screen::Welcome(message) => draw_welcome(display, &message.as_deref()).await,
-            Screen::Filaments(f, current_page, max_page) => {
-                draw_filaments(display, f, *current_page, *max_page).await
-            }
-            Self::NavigationHelp => draw_navigation_help(display).await,
-            Screen::Error(e) => draw_error(display, e).await,
-        }
-    }
-}
-
-pub enum Font {
-    Heading,
-    Text,
-    Description,
-}
-
-impl Font {
-    pub fn get(&self) -> MonoTextStyle<'_, BinaryColor> {
-        match self {
-            Font::Heading => MonoTextStyleBuilder::new()
-                .font(&FONT_8X13)
-                .text_color(BinaryColor::On)
-                .build(),
-            Font::Text => MonoTextStyleBuilder::new()
-                .font(&FONT_6X12)
-                .text_color(BinaryColor::On)
-                .build(),
-            Font::Description => MonoTextStyleBuilder::new()
-                .font(&FONT_5X7)
-                .text_color(BinaryColor::On)
-                .build(),
-        }
-    }
-
-    pub fn width(&self) -> i32 {
-        match self {
-            Font::Heading => 8,
-            Font::Text => 6,
-            Font::Description => 5,
-        }
-    }
-
-    pub fn height(&self) -> i32 {
-        match self {
-            Font::Heading => 13,
-            Font::Text => 12,
-            Font::Description => 7,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct UI<'a> {
-    pub screen: &'a Screen<'a>,
-}
-
-impl<'a> UI<'a> {
-    pub fn new() -> Self {
-        Self {
-            screen: &Screen::Welcome(None),
-        }
-    }
-
-    pub async fn draw(&self, display: &mut Display<'_>) {
-        self.screen.draw(display).await;
-    }
-
-    pub async fn render(&self, display: &mut Display<'_>) {
-        display.clear().await;
-        self.draw(display).await;
-        display.flush().await;
-    }
-
-    pub fn switch_screen(&mut self, screen: &'a Screen<'a>) {
-        self.screen = screen;
-    }
-}
-
-impl<'a> Default for UI<'a> {
-    fn default() -> Self {
-        Self {
-            screen: &Screen::Welcome(None),
-        }
-    }
-}
-
-async fn draw_welcome(display: &mut Display<'_>, message: &Option<&str>) {
+pub(super) async fn draw_welcome(display: &mut Display<'_>, message: &Option<&str>) {
     let mut y = 0;
 
     let welcome = Text::with_text_style(
@@ -161,7 +66,7 @@ async fn draw_welcome(display: &mut Display<'_>, message: &Option<&str>) {
     }
 }
 
-async fn draw_filaments(
+pub(super) async fn draw_filaments(
     display: &mut Display<'_>,
     filaments: &Vec<Filament, MAX_FILAMENT_COUNT>,
     current_page: i32,
@@ -232,7 +137,7 @@ async fn draw_filaments(
     // page_line_vertical.draw(display).unwrap();
 }
 
-async fn draw_navigation_help(display: &mut Display<'_>) {
+pub(super) async fn draw_navigation_help(display: &mut Display<'_>) {
     let mut y = 0;
     const TEXT_ML: i32 = 16; // text margin left 
     const IMG_MT: i32 = 2; // image margin top
@@ -311,7 +216,7 @@ async fn draw_navigation_help(display: &mut Display<'_>) {
     understand.draw(display).unwrap();
 }
 
-async fn draw_error(display: &mut Display<'_>, error: &crate::Error) {
+pub(super) async fn draw_error(display: &mut Display<'_>, error: &crate::Error) {
     let mut y = 0;
 
     let main = Text::with_text_style(

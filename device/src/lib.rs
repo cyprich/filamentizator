@@ -1,23 +1,17 @@
 #![no_std]
 
+pub mod api_client;
 pub mod button;
-pub mod client;
 pub mod display;
 pub mod error;
-pub mod images;
 pub mod models;
 pub mod navigator;
 pub mod ui;
 pub mod wifi;
 
 pub use error::Error;
-pub use images::*;
 
-use crate::{
-    display::Display,
-    models::Filament,
-    ui::{Screen, UI},
-};
+use crate::models::Filament;
 use heapless::Vec;
 use log::error;
 

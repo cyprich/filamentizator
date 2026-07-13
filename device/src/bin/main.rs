@@ -11,7 +11,7 @@ use device::button::{BUTTON_EVENTS, ButtonEvent, button_task};
 use device::navigator::Navigator;
 use device::{MAX_FILAMENT_COUNT, ui::Screen};
 #[allow(unused_imports)]
-use device::{client::ApiClient, display::Display, ui::UI, wifi};
+use device::{api_client::ApiClient, display::Display, wifi};
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use esp_hal::delay::Delay;
@@ -80,23 +80,23 @@ async fn main(spawner: Spawner) -> ! {
     display.flush().await;
 
     // init ui and show welcome screen
-    let mut ui = UI::new();
-    ui.switch_screen(&Screen::Welcome(None));
-    ui.render(&mut display).await;
+    Screen::Welcome(None).render(&mut display).await;
     Timer::after(Duration::from_secs(1)).await;
 
     // init wifi and api client
-    ui.switch_screen(&Screen::Welcome(Some("Initializing WiFi...")));
-    ui.render(&mut display).await;
+
+    Screen::Welcome(Some("Initializing WiFi..."))
+        .render(&mut display)
+        .await;
     let stack = wifi::init(peripherals.WIFI, spawner).await;
     let api_client = ApiClient::new(stack);
 
     // create navigator, this will handle the program run
-    let mut navigator = Navigator::new(ui, display, api_client).await;
+    let mut navigator = Navigator::new(display, api_client).await;
 
     loop {
         let event = BUTTON_EVENTS.receive().await;
-        navigator.handle_event(event).await;
+        navigator.handle_event(&event).await;
         info!("event: {:?}", event);
     }
 

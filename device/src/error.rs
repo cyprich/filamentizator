@@ -41,8 +41,8 @@ impl Error {
 
     pub fn get_hint(&self) -> Option<&str> {
         match self {
-            Error::Reqwless(error) => Some("Unreachable backend?"),
-            Error::SerdeJson(error) => Some("Old backend version?"),
+            Error::Reqwless(_) => Some("Unreachable backend?"),
+            Error::SerdeJson(_) => Some("Old backend version?"),
             _ => None,
         }
     }
