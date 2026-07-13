@@ -1,5 +1,6 @@
 #![no_std]
 
+pub mod button;
 pub mod client;
 pub mod display;
 pub mod error;

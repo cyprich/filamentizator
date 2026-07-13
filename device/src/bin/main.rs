@@ -7,6 +7,7 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
+use device::button::{BUTTON_EVENTS, ButtonEvent, button_task};
 use device::{MAX_FILAMENT_COUNT, ui::Screen};
 #[allow(unused_imports)]
 use device::{client::ApiClient, display::Display, ui::UI, wifi};
@@ -119,42 +120,36 @@ async fn main(spawner: Spawner) -> ! {
     // TODO: temp show help
     ui.switch_screen(Screen::NavigationHelp);
     ui.render(&mut display).await;
-    Timer::after(Duration::from_secs(10)).await;
+    Timer::after(Duration::from_secs(1)).await;
 
     // render filaments
     ui.switch_screen(Screen::Filaments(filaments, current_page, max_page));
     ui.render(&mut display).await;
 
+    // buttons
     let config = InputConfig::default().with_pull(Pull::Up);
-    let mut b1 = Input::new(peripherals.GPIO4, config.clone());
-    // let mut b2 = Input::new(peripherals.GPIO5, config.clone());
-    // let mut b3 = Input::new(peripherals.GPIO6, config.clone());
-    // let mut b4 = Input::new(peripherals.GPIO7, config.clone());
-    let mut delay = Delay::new();
+    let b1 = Input::new(peripherals.GPIO4, config.clone());
+    let b2 = Input::new(peripherals.GPIO5, config.clone());
+    let b3 = Input::new(peripherals.GPIO6, config.clone());
+    let b4 = Input::new(peripherals.GPIO7, config.clone());
 
-    print_when_pressed(&mut b1, &mut delay);
+    spawner.spawn(button_task(b1, ButtonEvent::Up).unwrap());
+    spawner.spawn(button_task(b2, ButtonEvent::Right).unwrap());
+    spawner.spawn(button_task(b3, ButtonEvent::Down).unwrap());
+    spawner.spawn(button_task(b4, ButtonEvent::Left).unwrap());
 
     // done
-    let mut i = 0;
+    // let mut i = 0;
     loop {
-        info!("running: {}", i);
-        i += 1;
-        Timer::after(Duration::from_secs(5)).await;
+        let events = BUTTON_EVENTS.receive().await;
+        info!("event: {:?}", events);
+        //
+        // info!("running: {}", i);
+        // i += 1;
+        // Timer::after(Duration::from_secs(1)).await;
     }
 
     // TODO: disconnect wifi
 
     // for inspiration have a look at the examples at https://github.com/esp-rs/esp-hal/tree/esp-hal-v1.1.0/examples
-}
-
-fn print_when_pressed(button: &mut Input<'_>, delay: &mut Delay) {
-    let mut was_pressed = false;
-    loop {
-        let is_pressed = button.is_low();
-        if is_pressed && !was_pressed {
-            info!("was pressed");
-        }
-        was_pressed = is_pressed;
-        delay.delay_millis(100);
-    }
 }

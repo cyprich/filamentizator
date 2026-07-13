@@ -67,6 +67,7 @@ serde-json-core = "0.6.0"
 serde = { version = "1.0.228", default-features = false, features = ["derive"] }
 ssd1306 = { version = "0.10.0", features = ["async"] }
 embedded-graphics = "0.8.2"
+embassy-sync = "0.8.0"
 
 [build-dependencies]
 dotenvy = "0.15.7"
