@@ -58,9 +58,9 @@ impl<'a> ApiClient<'a> {
 
     pub async fn get_filaments(
         &self,
-        page: usize,
+        page: i32,
     ) -> Result<Vec<Filament, MAX_FILAMENT_COUNT>, Error> {
-        let offset = page * MAX_FILAMENT_COUNT - MAX_FILAMENT_COUNT;
+        let offset = page * MAX_FILAMENT_COUNT as i32 - MAX_FILAMENT_COUNT as i32;
         let mut endpoint = String::<256>::new();
         write!(
             &mut endpoint,
@@ -73,7 +73,7 @@ impl<'a> ApiClient<'a> {
         Ok(filaments)
     }
 
-    pub async fn get_filaments_count(&self) -> Result<usize, Error> {
+    pub async fn get_filaments_count(&self) -> Result<i32, Error> {
         let endpoint = "/filament/count";
         let result = self.general_request(Method::GET, endpoint).await?;
         Ok(result)

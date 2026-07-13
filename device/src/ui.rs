@@ -24,7 +24,7 @@ use log::info;
 #[derive(Debug)]
 pub enum Screen<'a> {
     Welcome(Option<&'a str>),
-    Filaments(Vec<Filament, MAX_FILAMENT_COUNT>, usize, usize),
+    Filaments(&'a Vec<Filament, MAX_FILAMENT_COUNT>, i32, i32),
     NavigationHelp,
     Error(crate::Error, Option<&'a str>),
 }
@@ -85,13 +85,13 @@ impl Font {
 
 #[derive(Debug)]
 pub struct UI<'a> {
-    pub screen: Screen<'a>,
+    pub screen: &'a Screen<'a>,
 }
 
 impl<'a> UI<'a> {
     pub fn new() -> Self {
         Self {
-            screen: Screen::Welcome(None),
+            screen: &Screen::Welcome(None),
         }
     }
 
@@ -105,7 +105,7 @@ impl<'a> UI<'a> {
         display.flush().await;
     }
 
-    pub fn switch_screen(&mut self, screen: Screen<'a>) {
+    pub fn switch_screen(&mut self, screen: &'a Screen<'a>) {
         self.screen = screen;
     }
 }
@@ -113,7 +113,7 @@ impl<'a> UI<'a> {
 impl<'a> Default for UI<'a> {
     fn default() -> Self {
         Self {
-            screen: Screen::Welcome(None),
+            screen: &Screen::Welcome(None),
         }
     }
 }
@@ -164,8 +164,8 @@ async fn draw_welcome(display: &mut Display<'_>, message: &Option<&str>) {
 async fn draw_filaments(
     display: &mut Display<'_>,
     filaments: &Vec<Filament, MAX_FILAMENT_COUNT>,
-    current_page: usize,
-    max_page: usize,
+    current_page: i32,
+    max_page: i32,
 ) {
     let mut y = 0;
 
@@ -290,7 +290,7 @@ async fn draw_navigation_help(display: &mut Display<'_>) {
     );
 
     let understand = Text::with_baseline(
-        "Press Confirm to Continue",
+        "Press Confirm to Start",
         Point::new(0, 64 - Font::Description.height()),
         Font::Description.get(),
         Baseline::Bottom,

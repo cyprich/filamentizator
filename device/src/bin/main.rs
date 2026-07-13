@@ -8,6 +8,7 @@
 #![deny(clippy::large_stack_frames)]
 
 use device::button::{BUTTON_EVENTS, ButtonEvent, button_task};
+use device::navigator::Navigator;
 use device::{MAX_FILAMENT_COUNT, ui::Screen};
 #[allow(unused_imports)]
 use device::{client::ApiClient, display::Display, ui::UI, wifi};
@@ -60,73 +61,7 @@ async fn main(spawner: Spawner) -> ! {
 
     //////////////////////////////////////////////////////////////////////////////////////////
 
-    // init and clear display
-    let mut display = Display::new(peripherals.I2C0, peripherals.GPIO8, peripherals.GPIO9);
-    display.init().await;
-    display.clear().await;
-    display.flush().await;
-
-    // init ui and show welcome screen
-    let mut ui = UI::new();
-    ui.render(&mut display).await;
-    Timer::after(Duration::from_secs(1)).await;
-
-    // init wifi and api client
-    ui.switch_screen(Screen::Welcome(Some("Initializing WiFi...")));
-    ui.render(&mut display).await;
-    let stack = wifi::init(peripherals.WIFI, spawner).await;
-    let api = ApiClient::new(stack);
-
-    // get filaments count
-    let filament_count = match api.get_filaments_count().await {
-        Ok(val) => val,
-        Err(e) => {
-            error!("{}", &e);
-            let hint = match e {
-                device::Error::Reqwless(_) => Some("Unreachable backend?"),
-                _ => None,
-            };
-            ui.switch_screen(Screen::Error(e, hint));
-            ui.render(&mut display).await;
-            panic!() // TODO: handle this
-        }
-    };
-
-    // variables for filament screen
-    let mut current_page = 1;
-    let mut max_page = filament_count / MAX_FILAMENT_COUNT;
-    if filament_count % MAX_FILAMENT_COUNT != 0 {
-        max_page += 1;
-    }
-
-    // get filamets
-    ui.switch_screen(Screen::Welcome(Some("Getting Filaments")));
-    ui.render(&mut display).await;
-    let filaments = match api.get_filaments(current_page).await {
-        Ok(val) => val,
-        Err(e) => {
-            error!("{}", &e);
-            let hint = match e {
-                device::Error::Reqwless(_) => Some("Unreachable backend?"),
-                device::Error::SerdeJson(_) => Some("ani srnka netusi"),
-                _ => None,
-            };
-            ui.switch_screen(Screen::Error(e, hint));
-            ui.render(&mut display).await;
-            panic!() // TODO: handle this
-        }
-    };
-
-    // TODO: temp show help
-    ui.switch_screen(Screen::NavigationHelp);
-    ui.render(&mut display).await;
-    Timer::after(Duration::from_secs(1)).await;
-
-    // render filaments
-    ui.switch_screen(Screen::Filaments(filaments, current_page, max_page));
-    ui.render(&mut display).await;
-
-    // buttons
+    // set up buttons
     let config = InputConfig::default().with_pull(Pull::Up);
     let b1 = Input::new(peripherals.GPIO4, config.clone());
     let b2 = Input::new(peripherals.GPIO5, config.clone());
@@ -138,15 +73,31 @@ async fn main(spawner: Spawner) -> ! {
     spawner.spawn(button_task(b3, ButtonEvent::Down).unwrap());
     spawner.spawn(button_task(b4, ButtonEvent::Left).unwrap());
 
-    // done
-    // let mut i = 0;
+    // init and clear display
+    let mut display = Display::new(peripherals.I2C0, peripherals.GPIO8, peripherals.GPIO9);
+    display.init().await;
+    display.clear().await;
+    display.flush().await;
+
+    // init ui and show welcome screen
+    let mut ui = UI::new();
+    ui.switch_screen(&Screen::Welcome(None));
+    ui.render(&mut display).await;
+    Timer::after(Duration::from_secs(1)).await;
+
+    // init wifi and api client
+    ui.switch_screen(&Screen::Welcome(Some("Initializing WiFi...")));
+    ui.render(&mut display).await;
+    let stack = wifi::init(peripherals.WIFI, spawner).await;
+    let api_client = ApiClient::new(stack);
+
+    // create navigator, this will handle the program run
+    let mut navigator = Navigator::new(ui, display, api_client).await;
+
     loop {
-        let events = BUTTON_EVENTS.receive().await;
-        info!("event: {:?}", events);
-        //
-        // info!("running: {}", i);
-        // i += 1;
-        // Timer::after(Duration::from_secs(1)).await;
+        let event = BUTTON_EVENTS.receive().await;
+        navigator.handle_event(event).await;
+        info!("event: {:?}", event);
     }
 
     // TODO: disconnect wifi
