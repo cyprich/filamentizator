@@ -20,7 +20,7 @@ pub struct Display<'a> {
         BufferedGraphicsModeAsync<DisplaySize128x64>,
     >,
     // TODO: display size
-    framebuffer: [u8; 128 * 64],
+    // framebuffer: [u8; 128 * 64],
 }
 
 impl<'a> Display<'a> {
@@ -39,15 +39,14 @@ impl<'a> Display<'a> {
 
         let i2c_interface = I2CDisplayInterface::new(i2c_bus);
 
-        let mut display =
-            Ssd1306Async::new(i2c_interface, DisplaySize128x64, DisplayRotation::Rotate0)
-                .into_buffered_graphics_mode();
+        let display = Ssd1306Async::new(i2c_interface, DisplaySize128x64, DisplayRotation::Rotate0)
+            .into_buffered_graphics_mode();
 
-        let framebuffer = [0u8; 128 * 64];
+        // let framebuffer = [0u8; 128 * 64];
 
         Self {
             inner: display,
-            framebuffer,
+            // framebuffer,
         }
     }
 

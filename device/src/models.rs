@@ -40,7 +40,7 @@ pub struct Color {
     pub hex: String<6>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Filament {
     pub id: i32,
     pub name: String<MAX_STRING_LENGTH>,
@@ -52,23 +52,6 @@ pub struct Filament {
     pub colors: Vec<Color, MAX_COLOR_COUNT>,
     // pub date_created: OffsetDateTime,
     // pub date_updated: OffsetDateTime,
-}
-
-impl Default for Filament {
-    fn default() -> Self {
-        Self {
-            id: Default::default(),
-            name: Default::default(),
-            material: Default::default(),
-            vendor: Default::default(),
-            temp: Default::default(),
-            weight: Default::default(),
-            price: Default::default(),
-            colors: Default::default(),
-            // date_created: OffsetDateTime::from_unix_timestamp(0).unwrap(),
-            // date_updated: OffsetDateTime::from_unix_timestamp(0).unwrap(),
-        }
-    }
 }
 
 #[derive(Default, Debug, Serialize, Deserialize)]

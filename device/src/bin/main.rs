@@ -7,18 +7,13 @@
 )]
 #![deny(clippy::large_stack_frames)]
 
-use device::ui::Screen;
+use device::{MAX_FILAMENT_COUNT, ui::Screen};
 #[allow(unused_imports)]
 use device::{client::ApiClient, display::Display, ui::UI, wifi};
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use esp_hal::{clock::CpuClock, timer::timg::TimerGroup};
 use log::{error, info};
-
-use esp_hal::i2c::master::Config as I2cConfig;
-use esp_hal::i2c::master::I2c;
-use esp_hal::time::Rate;
-use ssd1306::{I2CDisplayInterface, Ssd1306Async, prelude::*};
 
 #[panic_handler]
 fn panic(panic_info: &core::panic::PanicInfo) -> ! {
@@ -70,25 +65,43 @@ async fn main(spawner: Spawner) -> ! {
 
     // init ui and show welcome screen
     let mut ui = UI::new();
-    ui.draw(&mut display).await;
-    display.flush().await;
+    ui.render(&mut display).await;
+    Timer::after(Duration::from_secs(1)).await;
 
     // init wifi and api client
+    ui.switch_screen(Screen::Welcome(Some("Initializing WiFi...")));
+    ui.render(&mut display).await;
     let stack = wifi::init(peripherals.WIFI, spawner).await;
     let api = ApiClient::new(stack);
 
-    // init filamets
+    // get filamets
+    ui.switch_screen(Screen::Welcome(Some("Getting Filaments")));
+    ui.render(&mut display).await;
     let filaments = match api.get_filaments().await {
         Ok(val) => val,
         Err(e) => {
-            // TODO: display this
-            error!("Failed to get Filaments: {:?}", e);
-            panic!()
+            error!("{:?}", &e);
+            ui.switch_screen(Screen::Error(e, Some("Unreachable backend?")));
+            ui.render(&mut display).await;
+            panic!() // TODO: handle this
         }
     };
 
+    // get filaments count
+    let count = match api.get_filaments_count().await {
+        Ok(val) => val,
+        Err(e) => {
+            error!("{:?}", &e);
+            ui.switch_screen(Screen::Error(e, Some("Unreachable backend?")));
+            ui.render(&mut display).await;
+            panic!() // TODO: handle this
+        }
+    };
+    let mut current_page = 1;
+    let max_page = count / MAX_FILAMENT_COUNT + 1;
+
     // show filaments screen
-    ui.switch_screen(Screen::Filaments(filaments));
+    ui.switch_screen(Screen::Filaments(filaments, current_page, max_page));
 
     info!("running");
 

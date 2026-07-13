@@ -1,20 +1,48 @@
+use core::fmt::Write;
 use heapless::String;
 
 use super::MAX_STRING_LENGTH;
 
 #[derive(Debug)]
 pub enum Error {
-    General,
-    String(String<MAX_STRING_LENGTH>),
+    Unknown,
+    General(String<MAX_STRING_LENGTH>),
     Reqwless(reqwless::Error),
     SerdeJson(serde_json_core::de::Error),
     Format(core::fmt::Error),
     SsdDisplayError,
 }
 
+impl Error {
+    pub fn get_type(&self) -> &str {
+        match self {
+            Error::Unknown => "Unknown Error",
+            Error::General(_) => "General Error",
+            Error::Reqwless(_) => "Network Error",
+            Error::SerdeJson(_) => "Serde Error",
+            Error::Format(_) => "Format Error",
+            Error::SsdDisplayError => "SSD1306 Display Error",
+        }
+    }
+    pub fn get_description(&self) -> heapless::String<MAX_STRING_LENGTH> {
+        let mut s = heapless::String::<MAX_STRING_LENGTH>::new();
+
+        match self {
+            Error::Unknown => write!(&mut s, "").unwrap(),
+            Error::General(val) => write!(&mut s, "{}", val).unwrap(),
+            Error::Reqwless(val) => write!(&mut s, "{}", val).unwrap(),
+            Error::SerdeJson(val) => write!(&mut s, "{}", val).unwrap(),
+            Error::Format(val) => write!(&mut s, "{}", val).unwrap(),
+            Error::SsdDisplayError => todo!(),
+        }
+
+        s
+    }
+}
+
 impl From<String<MAX_STRING_LENGTH>> for Error {
     fn from(value: String<MAX_STRING_LENGTH>) -> Self {
-        Self::String(value)
+        Self::General(value)
     }
 }
 

@@ -2,32 +2,35 @@ use embedded_graphics::{
     Drawable,
     mono_font::{
         MonoTextStyle, MonoTextStyleBuilder,
-        ascii::{FONT_4X6, FONT_5X7, FONT_6X12, FONT_8X13},
+        ascii::{FONT_5X7, FONT_6X12, FONT_8X13},
     },
     pixelcolor::BinaryColor,
     prelude::*,
-    text::{Baseline, Text},
+    text::{Alignment, Baseline, Text, TextStyleBuilder},
 };
 use heapless::Vec;
+
+use crate::display::Display;
+use crate::{MAX_FILAMENT_COUNT, models::Filament};
+
+use core::fmt::Write;
 use log::info;
 
-use crate::{MAX_FILAMENT_COUNT, models::Filament};
-use crate::{display::Display, models::FilamentSimple};
-
-// padding
-const PAD: i32 = 4;
-
 #[derive(Debug)]
-pub enum Screen {
-    Welcome,
-    Filaments(Vec<Filament, MAX_FILAMENT_COUNT>),
+pub enum Screen<'a> {
+    Welcome(Option<&'a str>),
+    Filaments(Vec<Filament, MAX_FILAMENT_COUNT>, usize, usize),
+    Error(crate::Error, Option<&'a str>),
 }
 
-impl Screen {
+impl Screen<'_> {
     pub async fn draw(&self, display: &mut Display<'_>) {
         match self {
-            Screen::Welcome => draw_welcome(display).await,
-            Screen::Filaments(f) => draw_filaments(display, f).await,
+            Screen::Welcome(message) => draw_welcome(display, &message.as_deref()).await,
+            Screen::Filaments(f, current_page, max_page) => {
+                draw_filaments(display, f, *current_page, *max_page).await
+            }
+            Screen::Error(e, hint) => draw_error(display, e, hint).await,
         }
     }
 }
@@ -56,24 +59,32 @@ impl Font {
         }
     }
 
-    pub fn height(&self) -> i32 {
+    pub fn width(&self) -> i32 {
         match self {
             Font::Heading => 8,
             Font::Text => 6,
             Font::Description => 5,
         }
     }
+
+    pub fn height(&self) -> i32 {
+        match self {
+            Font::Heading => 13,
+            Font::Text => 12,
+            Font::Description => 7,
+        }
+    }
 }
 
 #[derive(Debug)]
-pub struct UI {
-    pub screen: Screen,
+pub struct UI<'a> {
+    pub screen: Screen<'a>,
 }
 
-impl UI {
+impl<'a> UI<'a> {
     pub fn new() -> Self {
         Self {
-            screen: Screen::Welcome,
+            screen: Screen::Welcome(None),
         }
     }
 
@@ -81,55 +92,148 @@ impl UI {
         self.screen.draw(display).await;
     }
 
-    pub fn switch_screen(&mut self, screen: Screen) {
+    pub async fn render(&self, display: &mut Display<'_>) {
+        display.clear().await;
+        self.draw(display).await;
+        display.flush().await;
+    }
+
+    pub fn switch_screen(&mut self, screen: Screen<'a>) {
         self.screen = screen;
     }
 }
 
-async fn draw_welcome(display: &mut Display<'_>) {
-    let x = PAD;
-    let mut y = PAD;
+impl<'a> Default for UI<'a> {
+    fn default() -> Self {
+        Self {
+            screen: Screen::Welcome(None),
+        }
+    }
+}
 
-    let welcome = Text::with_baseline(
+async fn draw_welcome(display: &mut Display<'_>, message: &Option<&str>) {
+    let mut y = 0;
+
+    let welcome = Text::with_text_style(
         "Welcome to",
-        Point::new(x, y),
+        Point::new(64, y),
         Font::Text.get(),
-        Baseline::Top,
+        TextStyleBuilder::new()
+            .alignment(Alignment::Center)
+            .baseline(Baseline::Top)
+            .build(),
     );
 
-    y += Font::Text.height() + PAD * 2;
+    y += Font::Text.height();
 
-    let fila = Text::with_baseline(
+    let fila = Text::with_text_style(
         "Filamentizator",
-        Point::new(x, y),
+        Point::new(64, y),
         Font::Heading.get(),
-        Baseline::Top,
-    );
-
-    y += Font::Heading.height() + PAD * 2;
-
-    let loading = Text::with_baseline(
-        "Loading...",
-        Point::new(x, y),
-        Font::Description.get(),
-        Baseline::Top,
+        TextStyleBuilder::new()
+            .alignment(Alignment::Center)
+            .baseline(Baseline::Top)
+            .build(),
     );
 
     welcome.draw(display).unwrap();
     fila.draw(display).unwrap();
-    loading.draw(display).unwrap();
+
+    if let Some(val) = message {
+        let message = Text::with_text_style(
+            val,
+            Point::new(64, 64),
+            Font::Description.get(),
+            TextStyleBuilder::new()
+                .alignment(Alignment::Center)
+                .baseline(Baseline::Bottom)
+                .build(),
+        );
+
+        message.draw(display).unwrap();
+    }
 }
 
-async fn draw_filaments(display: &mut Display<'_>, filaments: &Vec<Filament, MAX_FILAMENT_COUNT>) {
-    let x = PAD;
-    let mut y = PAD;
+async fn draw_filaments(
+    display: &mut Display<'_>,
+    filaments: &Vec<Filament, MAX_FILAMENT_COUNT>,
+    current_page: usize,
+    max_page: usize,
+) {
+    let mut y = 0;
 
-    let text = Text::with_baseline(
+    let title = Text::with_text_style(
         "Filaments",
-        Point::new(x, y),
+        Point::new(0, y),
         Font::Description.get(),
-        Baseline::Top,
+        TextStyleBuilder::new()
+            .alignment(Alignment::Left)
+            .baseline(Baseline::Top)
+            .build(),
     );
 
-    text.draw(display).unwrap();
+    let mut page = heapless::String::<16>::new();
+    write!(&mut page, "Page {}/{}", current_page, max_page).unwrap();
+    info!("PAGE: {}", page);
+    let page = Text::with_text_style(
+        &page,
+        Point::new(128, 0),
+        Font::Description.get(),
+        TextStyleBuilder::new()
+            .alignment(Alignment::Right)
+            .baseline(Baseline::Top)
+            .build(),
+    );
+
+    y += Font::Description.height();
+
+    title.draw(display).unwrap();
+    page.draw(display).unwrap();
+}
+
+async fn draw_error(display: &mut Display<'_>, error: &crate::Error, hint: &Option<&str>) {
+    let mut y = 0;
+
+    let main = Text::with_text_style(
+        error.get_type(),
+        Point::new(64, y),
+        Font::Heading.get(),
+        TextStyleBuilder::new()
+            .alignment(Alignment::Center)
+            .baseline(Baseline::Top)
+            .build(),
+    );
+    y += Font::Heading.height();
+
+    let desc = error.get_description();
+    let desc = crate::trunc_str(&desc, (128 / Font::Text.width()) as usize, 2);
+    let desc = Text::with_text_style(
+        &desc,
+        Point::new(64, y),
+        Font::Text.get(),
+        TextStyleBuilder::new()
+            .alignment(Alignment::Center)
+            .baseline(Baseline::Top)
+            .build(),
+    );
+
+    main.draw(display).unwrap();
+    desc.draw(display).unwrap();
+
+    if let Some(val) = hint {
+        let mut hint = heapless::String::<64>::new();
+        write!(&mut hint, "Hint:\n{}", val).unwrap();
+
+        let hint = Text::with_text_style(
+            &hint,
+            Point::new(0, 64 - Font::Description.height()),
+            Font::Description.get(),
+            TextStyleBuilder::new()
+                .alignment(Alignment::Left)
+                .baseline(Baseline::Bottom)
+                .build(),
+        );
+
+        hint.draw(display).unwrap();
+    }
 }

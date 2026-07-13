@@ -67,4 +67,10 @@ impl<'a> ApiClient<'a> {
 
         Ok(filaments)
     }
+
+    pub async fn get_filaments_count(&self) -> Result<usize, Error> {
+        let endpoint = "/filament/count";
+        let result = self.general_request(Method::GET, endpoint).await?;
+        Ok(result)
+    }
 }
