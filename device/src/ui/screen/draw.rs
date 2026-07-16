@@ -57,12 +57,15 @@ pub(super) async fn draw_filaments(
     filaments: &Vec<Filament, MAX_FILAMENT_COUNT>,
     current_page: i32,
     max_page: i32,
+    selected_filament: i32,
 ) {
+    let x = 6;
     let mut y = 0;
+    const GAP: i32 = 4;
 
     // page number
     let mut page = String::<16>::new();
-    write!(&mut page, "Page {}/{}", current_page, max_page).unwrap();
+    write!(&mut page, "{}/{}", current_page, max_page).unwrap();
     let page_text_width = page.chars().count() as i32 * (Font::Description.width());
     let page = Text::with_text_style(
         &page,
@@ -92,9 +95,11 @@ pub(super) async fn draw_filaments(
 
     // render each filament
     for f in filaments {
-        let name = Text::with_baseline(&f.name, Point::new(0, y), Font::Text.get(), Baseline::Top);
+        // create name
+        let name = Text::with_baseline(&f.name, Point::new(x, y), Font::Text.get(), Baseline::Top);
         y += Font::Text.height();
 
+        // format description
         const LEN: usize = MAX_STRING_LENGTH * 2;
         let mut desc = String::<LEN>::new();
         write!(&mut desc, "{} - {}", f.vendor_name, f.material_name).unwrap();
@@ -102,23 +107,31 @@ pub(super) async fn draw_filaments(
             write!(&mut desc, " - {}", color).unwrap();
         }
 
-        let desc = trunc_str(&desc, (120 / Font::Description.width()) as usize, 1);
-
+        // create description
+        let desc = trunc_str(&desc, ((128 - x) / Font::Description.width()) as usize, 1);
         let desc = Text::with_baseline(
             &desc,
-            Point::new(0, y),
+            Point::new(x, y),
             Font::Description.get(),
             Baseline::Top,
         );
         y += Font::Description.height();
-        y += 3;
+        y += GAP;
 
         name.draw(display).unwrap();
         desc.draw(display).unwrap();
     }
 
+    // indicator
+    let x = -3; // slightly over the edge - smaller and creates a space
+    y = 8; // constant (offset from the top)
+    y += (selected_filament - 1) * (Font::Text.height() + Font::Description.height() + GAP); // line
+    let indi = ImageRaw::<BinaryColor>::new(CHEVRON_RIGHT, 8);
+    let indi = Image::new(&indi, Point::new(x, y));
+
     page_rect.draw(display).unwrap();
     page.draw(display).unwrap();
+    indi.draw(display).unwrap();
     // page_line_horizontal.draw(display).unwrap();
     // page_line_vertical.draw(display).unwrap();
 }

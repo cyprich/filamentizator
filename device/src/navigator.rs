@@ -1,4 +1,7 @@
-use core::panic;
+use core::{
+    cmp::{max, min},
+    panic,
+};
 
 use heapless::Vec;
 use log::{error, warn};
@@ -20,9 +23,11 @@ pub struct Navigator<'a> {
     api_client: ApiClient<'a>,
     screen: Screen<'a>,
 
-    // pagination stuff
+    // filaments pagination stuff
+    filaments_count: i32,
     current_page: i32,
     max_page: i32,
+    selected_filament: i32,
 
     // quitting program
     should_exit: bool,
@@ -33,10 +38,8 @@ impl Navigator<'_> {
     // maybe move the getting filaments and stuff into main?
     // or choose better name for this?
     pub async fn new(mut display: Display<'static>, api_client: ApiClient<'static>) -> Self {
-        warn!("new navigator");
         // get filaments count
         let result = api_client.get_filaments_count().await;
-        warn!("new filaments");
         let filaments_count = match result {
             Ok(val) => val,
             Err(e) => {
@@ -52,16 +55,22 @@ impl Navigator<'_> {
         if filaments_count % MAX_FILAMENT_COUNT as i32 != 0 {
             max_page += 1;
         }
+        let selected_filament = 1;
 
         let screen = Screen::NavigationHelp;
         screen.render(&mut display).await;
 
         Self {
+            // structs
             display,
             api_client,
             screen,
+            // filaments pagination
+            filaments_count,
             current_page,
+            selected_filament,
             max_page,
+            // exit state
             should_exit: false,
         }
     }
@@ -69,21 +78,68 @@ impl Navigator<'_> {
     pub async fn handle_event(&mut self, event: &ButtonEvent) {
         let new_screen = match &self.screen {
             // TODO: all screens
-            Screen::Filaments(_, _, _) => match event {
+            Screen::Filaments {
+                filaments,
+                current_page: _,
+                max_page: _,
+                seleted_filament: _,
+            } => match event {
+                // navigation in Filaments screen
                 ButtonEvent::Up => {
-                    if let Some(val) = self.update_filaments(SetFilamentPage::Previous).await {
-                        let screen = Screen::Filaments(val, self.current_page, self.max_page);
-                        Some(screen)
+                    // check if we are staying on this page
+                    if self.selected_filament > 1 {
+                        // just select previous filament
+                        self.selected_filament -= 1;
+                        Some(Screen::Filaments {
+                            filaments: filaments.clone(),
+                            current_page: self.current_page,
+                            max_page: self.max_page,
+                            seleted_filament: self.selected_filament,
+                        })
                     } else {
-                        None
+                        // we are going to the next page
+                        // if update was successfull/if there is next page
+                        if let Some(val) = self.update_filaments(SetFilamentPage::Previous).await {
+                            Some(Screen::Filaments {
+                                filaments: val,
+                                current_page: self.current_page,
+                                max_page: self.max_page,
+                                seleted_filament: self.selected_filament,
+                            })
+                        } else {
+                            None
+                        }
                     }
                 }
                 ButtonEvent::Down => {
-                    if let Some(val) = self.update_filaments(SetFilamentPage::Next).await {
-                        let screen = Screen::Filaments(val, self.current_page, self.max_page);
-                        Some(screen)
+                    if self.selected_filament < MAX_FILAMENT_COUNT as i32 {
+                        self.selected_filament += 1;
+
+                        // fix "invisible filament selected"; if screen is not filled entirely with filaments
+                        if self.current_page == self.max_page {
+                            self.selected_filament = min(
+                                self.selected_filament,
+                                self.filaments_count % MAX_FILAMENT_COUNT as i32,
+                            );
+                        }
+
+                        Some(Screen::Filaments {
+                            filaments: filaments.clone(),
+                            current_page: self.current_page,
+                            max_page: self.max_page,
+                            seleted_filament: self.selected_filament,
+                        })
                     } else {
-                        None
+                        if let Some(val) = self.update_filaments(SetFilamentPage::Next).await {
+                            Some(Screen::Filaments {
+                                filaments: val,
+                                current_page: self.current_page,
+                                max_page: self.max_page,
+                                seleted_filament: self.selected_filament,
+                            })
+                        } else {
+                            None
+                        }
                     }
                 }
                 ButtonEvent::Right => {
@@ -91,14 +147,19 @@ impl Navigator<'_> {
                     None
                 }
                 ButtonEvent::Left => {
-                    // dont do anything? idk
+                    // dont do anything? go to navigation help? idk what i want
                     None
                 }
             },
             Screen::NavigationHelp => {
                 if matches!(event, ButtonEvent::Right) {
                     if let Some(val) = self.update_filaments(SetFilamentPage::Current).await {
-                        let screen = Screen::Filaments(val, self.current_page, self.max_page);
+                        let screen = Screen::Filaments {
+                            filaments: val,
+                            current_page: self.current_page,
+                            max_page: self.max_page,
+                            seleted_filament: self.selected_filament,
+                        };
                         Some(screen)
                     } else {
                         None
@@ -116,6 +177,7 @@ impl Navigator<'_> {
             return;
         }
 
+        // update and render screen
         self.screen = new_screen.unwrap();
         self.screen.render(&mut self.display).await;
     }
@@ -124,25 +186,30 @@ impl Navigator<'_> {
         &mut self,
         page: SetFilamentPage,
     ) -> Option<Vec<Filament, MAX_FILAMENT_COUNT>> {
-        let new_page = match page {
+        match page {
+            // just update
             SetFilamentPage::Current => Some(self.current_page),
+            // check if we are going to the next page
             SetFilamentPage::Next => {
                 if self.current_page < self.max_page {
-                    Some(self.current_page + 1)
+                    self.current_page += 1;
+                    self.selected_filament = 1;
+                    Some(self.current_page)
                 } else {
                     None
                 }
             }
+            // check if we are going to the previous page
             SetFilamentPage::Previous => {
                 if self.current_page > 1 {
-                    Some(self.current_page - 1)
+                    self.current_page -= 1;
+                    self.selected_filament = MAX_FILAMENT_COUNT as i32;
+                    Some(self.current_page)
                 } else {
                     None
                 }
             }
         }?;
-
-        self.current_page = new_page;
 
         let result = self.api_client.get_filaments(self.current_page).await;
         match result {

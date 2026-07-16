@@ -48,7 +48,6 @@ impl<'a> ApiClient<'a> {
         let mut rx_buf = [0u8; 4096];
 
         // request, response, response body
-        warn!("before request");
         let mut req = client.request(method, &url).await?;
         let resp = req.send(&mut rx_buf).await?;
         let body = resp.body().read_to_end().await?;

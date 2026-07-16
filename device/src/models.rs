@@ -4,7 +4,7 @@ use heapless::{String, Vec};
 use serde::Deserialize;
 use serde::Serialize;
 
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub struct Filament {
     pub id: i32,
     pub name: String<MAX_STRING_LENGTH>,
