@@ -5,6 +5,7 @@ use embassy_net::{
     tcp::client::{TcpClient, TcpClientState},
 };
 use heapless::{String, Vec};
+use log::warn;
 use reqwless::{client::HttpClient, request::Method};
 
 use crate::{
@@ -35,6 +36,8 @@ impl<'a> ApiClient<'a> {
     where
         T: for<'de> serde::Deserialize<'de>,
     {
+        // TODO: when backend is not reachable, it will just wait here
+        // some kind of timeout would be nice
         let mut client = HttpClient::new(&self.tcp, &self.dns);
 
         // construct URL
@@ -45,6 +48,7 @@ impl<'a> ApiClient<'a> {
         let mut rx_buf = [0u8; 4096];
 
         // request, response, response body
+        warn!("before request");
         let mut req = client.request(method, &url).await?;
         let resp = req.send(&mut rx_buf).await?;
         let body = resp.body().read_to_end().await?;

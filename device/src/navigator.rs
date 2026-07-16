@@ -1,7 +1,7 @@
 use core::panic;
 
 use heapless::Vec;
-use log::error;
+use log::{error, warn};
 
 use crate::{
     MAX_FILAMENT_COUNT, api_client::ApiClient, button::ButtonEvent, display::Display,
@@ -33,8 +33,10 @@ impl Navigator<'_> {
     // maybe move the getting filaments and stuff into main?
     // or choose better name for this?
     pub async fn new(mut display: Display<'static>, api_client: ApiClient<'static>) -> Self {
+        warn!("new navigator");
         // get filaments count
         let result = api_client.get_filaments_count().await;
+        warn!("new filaments");
         let filaments_count = match result {
             Ok(val) => val,
             Err(e) => {
@@ -67,18 +69,49 @@ impl Navigator<'_> {
     pub async fn handle_event(&mut self, event: &ButtonEvent) {
         let new_screen = match &self.screen {
             // TODO: all screens
-            Screen::Filaments(_vec_inner, _, _) => None,
+            Screen::Filaments(_, _, _) => match event {
+                ButtonEvent::Up => {
+                    if let Some(val) = self.update_filaments(SetFilamentPage::Previous).await {
+                        let screen = Screen::Filaments(val, self.current_page, self.max_page);
+                        Some(screen)
+                    } else {
+                        None
+                    }
+                }
+                ButtonEvent::Down => {
+                    if let Some(val) = self.update_filaments(SetFilamentPage::Next).await {
+                        let screen = Screen::Filaments(val, self.current_page, self.max_page);
+                        Some(screen)
+                    } else {
+                        None
+                    }
+                }
+                ButtonEvent::Right => {
+                    // TODO: one filament screen
+                    None
+                }
+                ButtonEvent::Left => {
+                    // dont do anything? idk
+                    None
+                }
+            },
             Screen::NavigationHelp => {
                 if matches!(event, ButtonEvent::Right) {
-                    let filaments = self.update_filaments(SetFilamentPage::Current).await;
-                    let screen = Screen::Filaments(filaments, self.current_page, self.max_page);
-                    Some(screen)
+                    if let Some(val) = self.update_filaments(SetFilamentPage::Current).await {
+                        let screen = Screen::Filaments(val, self.current_page, self.max_page);
+                        Some(screen)
+                    } else {
+                        None
+                    }
                 } else {
                     None
                 }
             }
-            _ => None,
+
+            // dont do anything on these screens
+            Screen::Welcome | Screen::Info(_) | Screen::Error(_) => None,
         };
+
         if new_screen.is_none() {
             return;
         }
@@ -90,28 +123,30 @@ impl Navigator<'_> {
     async fn update_filaments(
         &mut self,
         page: SetFilamentPage,
-    ) -> Vec<Filament, MAX_FILAMENT_COUNT> {
+    ) -> Option<Vec<Filament, MAX_FILAMENT_COUNT>> {
         let new_page = match page {
-            SetFilamentPage::Current => self.current_page,
+            SetFilamentPage::Current => Some(self.current_page),
             SetFilamentPage::Next => {
-                if self.current_page + 1 > self.max_page {
-                    self.current_page
+                if self.current_page < self.max_page {
+                    Some(self.current_page + 1)
                 } else {
-                    self.current_page + 1
+                    None
                 }
             }
             SetFilamentPage::Previous => {
-                if self.current_page - 1 < 1 {
-                    self.current_page
+                if self.current_page > 1 {
+                    Some(self.current_page - 1)
                 } else {
-                    self.current_page - 1
+                    None
                 }
             }
-        };
+        }?;
 
-        let result = self.api_client.get_filaments(new_page).await;
+        self.current_page = new_page;
+
+        let result = self.api_client.get_filaments(self.current_page).await;
         match result {
-            Ok(val) => val,
+            Ok(val) => Some(val),
             Err(e) => {
                 error!("{}", e);
                 Screen::Error(&e).render(&mut self.display).await;

@@ -19,7 +19,7 @@ pub const WIFI_SSID: Option<&str> = option_env!("WIFI_SSID");
 pub const WIFI_PASSWORD: Option<&str> = option_env!("WIFI_PASSWORD");
 
 // TODO: user-configurable via env vars
-pub const BASE_URL: &str = "http://192.168.88.115:5000";
+pub const BASE_URL: &str = "http://192.168.88.101:5000";
 
 #[macro_export]
 macro_rules! mk_static {

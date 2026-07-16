@@ -16,7 +16,7 @@ use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use esp_hal::gpio::{Input, InputConfig, Pull};
 use esp_hal::{clock::CpuClock, timer::timg::TimerGroup};
-use log::{error, info};
+use log::{error, info, warn};
 
 #[panic_handler]
 fn panic(panic_info: &core::panic::PanicInfo) -> ! {
@@ -83,7 +83,6 @@ async fn main(spawner: Spawner) -> ! {
     Timer::after(Duration::from_secs(3)).await;
 
     // init wifi and api client
-
     Screen::Info("Initializing WiFi...")
         .render(&mut display)
         .await;
@@ -99,7 +98,10 @@ async fn main(spawner: Spawner) -> ! {
         navigator.handle_event(&event).await;
 
         if navigator.should_exit() {
-            loop {}
+            loop {
+                warn!("Exit");
+                Timer::after(Duration::from_secs(5)).await;
+            }
         }
     }
 
