@@ -10,6 +10,7 @@ pub struct Filament {
     pub name: String<MAX_STRING_LENGTH>,
     pub material_name: String<MAX_STRING_LENGTH>,
     pub vendor_name: String<MAX_STRING_LENGTH>,
+    pub price: f32,
     pub temp_min: i32,
     pub temp_max: Option<i32>,
     pub temp_bed_min: i32,
@@ -17,7 +18,6 @@ pub struct Filament {
     pub weight_original: i32,
     pub weight_net: i32,
     pub weight_spool: i32,
-    pub price: f32,
     pub colors: Vec<String<MAX_STRING_LENGTH>, MAX_COLOR_COUNT>,
     // TODO: either fix or remove this
     // pub date_created: OffsetDateTime,

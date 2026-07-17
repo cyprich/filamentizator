@@ -142,10 +142,9 @@ impl Navigator<'_> {
                         }
                     }
                 }
-                ButtonEvent::Right => {
-                    // TODO: one filament screen
-                    None
-                }
+                ButtonEvent::Right => Some(Screen::Filament(
+                    filaments[self.selected_filament as usize - 1].clone(),
+                )),
                 ButtonEvent::Left => {
                     // dont do anything? go to navigation help? idk what i want
                     None
@@ -169,7 +168,24 @@ impl Navigator<'_> {
                 }
             }
 
-            // dont do anything on these screens
+            Screen::Filament(_) => {
+                if matches!(event, ButtonEvent::Left) {
+                    let result = self.update_filaments(SetFilamentPage::Current).await;
+                    if let Some(val) = result {
+                        Some(Screen::Filaments {
+                            filaments: val,
+                            current_page: self.current_page,
+                            max_page: self.max_page,
+                            seleted_filament: self.selected_filament,
+                        })
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            }
+            // TODO: dont do anything on these screens?
             Screen::Welcome | Screen::Info(_) | Screen::Error(_) => None,
         };
 

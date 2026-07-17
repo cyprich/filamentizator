@@ -16,6 +16,7 @@ pub enum Screen<'a> {
         max_page: i32,
         seleted_filament: i32,
     },
+    Filament(Filament),
     NavigationHelp,
     Info(&'a str),
     Error(&'a Error),
@@ -40,6 +41,7 @@ impl Screen<'_> {
                 )
                 .await
             }
+            Self::Filament(filament) => draw_filament(display, filament).await,
             Self::NavigationHelp => draw_navigation_help(display).await,
             Screen::Info(info) => draw_info(display, info).await,
             Screen::Error(error) => draw_error(display, error).await,
