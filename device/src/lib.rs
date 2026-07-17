@@ -21,6 +21,7 @@ pub const WIFI_PASSWORD: Option<&str> = option_env!("WIFI_PASSWORD");
 
 // TODO: user-configurable via env vars
 pub const BASE_URL: &str = "http://192.168.88.101:5000";
+pub const MAX_LED_BRIGHTNESS: u16 = 75; // percent, dont get confused by the type
 
 #[macro_export]
 macro_rules! mk_static {

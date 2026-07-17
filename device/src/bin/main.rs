@@ -9,6 +9,7 @@
 
 use device::button::{BUTTON_EVENTS, ButtonEvent, button_task};
 use device::navigator::Navigator;
+use device::rgbled::RGBLed;
 use device::ui::Screen;
 #[allow(unused_imports)]
 use device::{api_client::ApiClient, display::Display, wifi};
@@ -18,11 +19,7 @@ use esp_hal::gpio::{Input, InputConfig, Pull};
 use esp_hal::{clock::CpuClock, timer::timg::TimerGroup};
 use log::{error, info, warn};
 
-use esp_hal::ledc::{
-    self, Ledc, LowSpeed,
-    channel::{self, Channel, ChannelIFace},
-    timer::{self, LSClockSource, TimerIFace},
-};
+use esp_hal::ledc::{Ledc, LowSpeed, timer};
 
 #[panic_handler]
 fn panic(panic_info: &core::panic::PanicInfo) -> ! {
@@ -65,49 +62,24 @@ async fn main(spawner: Spawner) -> ! {
     let _ = spawner;
 
     //////////////////////////////////////////////////////////////////////////////////////////
-    // TODO: temp rgbled
-    let mut ledc = Ledc::new(peripherals.LEDC);
-    ledc.set_global_slow_clock(ledc::LSGlobalClkSource::APBClk);
-    let mut timer = ledc.timer::<LowSpeed>(timer::Number::Timer0);
-    let _ = timer.configure(timer::config::Config {
-        duty: timer::config::Duty::Duty8Bit,
-        clock_source: timer::LSClockSource::APBClk,
-        frequency: esp_hal::time::Rate::from_khz(24),
-    });
+
+    // RGB LED
+    let ledc = Ledc::new(peripherals.LEDC);
+    let mut ledc_timer = ledc.timer::<LowSpeed>(timer::Number::Timer0);
 
     let r = peripherals.GPIO16;
     let g = peripherals.GPIO17;
     let b = peripherals.GPIO18;
 
-    let mut rchannel = ledc.channel(channel::Number::Channel0, r);
-    let mut gchannel = ledc.channel(channel::Number::Channel1, g);
-    let mut bchannel = ledc.channel(channel::Number::Channel2, b);
-
-    let conf = channel::config::Config {
-        timer: &timer,
-        duty_pct: 10,
-        drive_mode: esp_hal::gpio::DriveMode::PushPull,
-    };
-
-    rchannel.configure(conf).unwrap();
-    gchannel.configure(conf).unwrap();
-    bchannel.configure(conf).unwrap();
-
-    let _ = rchannel.set_duty(0);
-    let _ = gchannel.set_duty(200);
-    let _ = bchannel.set_duty(150);
-
-    loop {
-        info!("done");
-        Timer::after(Duration::from_secs(5)).await;
-    }
+    let mut rgbled = RGBLed::new(r, g, b, ledc, &mut ledc_timer);
+    rgbled.strobe_rgb(255, 255, 255, None).await;
 
     // set up buttons
     let config = InputConfig::default().with_pull(Pull::Up);
-    let b1 = Input::new(peripherals.GPIO4, config.clone());
-    let b2 = Input::new(peripherals.GPIO5, config.clone());
-    let b3 = Input::new(peripherals.GPIO6, config.clone());
-    let b4 = Input::new(peripherals.GPIO7, config.clone());
+    let b1 = Input::new(peripherals.GPIO4, config);
+    let b2 = Input::new(peripherals.GPIO5, config);
+    let b3 = Input::new(peripherals.GPIO6, config);
+    let b4 = Input::new(peripherals.GPIO7, config);
 
     spawner.spawn(button_task(b1, ButtonEvent::Up).unwrap());
     spawner.spawn(button_task(b2, ButtonEvent::Right).unwrap());

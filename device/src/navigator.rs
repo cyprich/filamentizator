@@ -1,7 +1,7 @@
 use core::{cmp::min, panic};
 
 use heapless::Vec;
-use log::{error, warn};
+use log::error;
 
 use crate::{
     MAX_FILAMENT_COUNT, api_client::ApiClient, button::ButtonEvent, display::Display,
