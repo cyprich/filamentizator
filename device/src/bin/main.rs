@@ -18,6 +18,12 @@ use esp_hal::gpio::{Input, InputConfig, Pull};
 use esp_hal::{clock::CpuClock, timer::timg::TimerGroup};
 use log::{error, info, warn};
 
+use esp_hal::ledc::{
+    self, Ledc, LowSpeed,
+    channel::{self, Channel, ChannelIFace},
+    timer::{self, LSClockSource, TimerIFace},
+};
+
 #[panic_handler]
 fn panic(panic_info: &core::panic::PanicInfo) -> ! {
     error!("{}", panic_info);
@@ -59,6 +65,42 @@ async fn main(spawner: Spawner) -> ! {
     let _ = spawner;
 
     //////////////////////////////////////////////////////////////////////////////////////////
+    // TODO: temp rgbled
+    let mut ledc = Ledc::new(peripherals.LEDC);
+    ledc.set_global_slow_clock(ledc::LSGlobalClkSource::APBClk);
+    let mut timer = ledc.timer::<LowSpeed>(timer::Number::Timer0);
+    let _ = timer.configure(timer::config::Config {
+        duty: timer::config::Duty::Duty8Bit,
+        clock_source: timer::LSClockSource::APBClk,
+        frequency: esp_hal::time::Rate::from_khz(24),
+    });
+
+    let r = peripherals.GPIO16;
+    let g = peripherals.GPIO17;
+    let b = peripherals.GPIO18;
+
+    let mut rchannel = ledc.channel(channel::Number::Channel0, r);
+    let mut gchannel = ledc.channel(channel::Number::Channel1, g);
+    let mut bchannel = ledc.channel(channel::Number::Channel2, b);
+
+    let conf = channel::config::Config {
+        timer: &timer,
+        duty_pct: 10,
+        drive_mode: esp_hal::gpio::DriveMode::PushPull,
+    };
+
+    rchannel.configure(conf).unwrap();
+    gchannel.configure(conf).unwrap();
+    bchannel.configure(conf).unwrap();
+
+    let _ = rchannel.set_duty(0);
+    let _ = gchannel.set_duty(200);
+    let _ = bchannel.set_duty(150);
+
+    loop {
+        info!("done");
+        Timer::after(Duration::from_secs(5)).await;
+    }
 
     // set up buttons
     let config = InputConfig::default().with_pull(Pull::Up);

@@ -1,7 +1,4 @@
-use core::{
-    cmp::{max, min},
-    panic,
-};
+use core::{cmp::min, panic};
 
 use heapless::Vec;
 use log::{error, warn};

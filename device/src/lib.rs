@@ -6,6 +6,7 @@ pub mod display;
 pub mod error;
 pub mod models;
 pub mod navigator;
+pub mod rgbled;
 pub mod ui;
 pub mod wifi;
 
